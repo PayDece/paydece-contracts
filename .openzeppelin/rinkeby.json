@@ -1,0 +1,578 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x1955eCad604fb34D216Bca32FD7C0C771A03E4Af",
+    "txHash": "0x88da29c506ac1a2b5381fa5a21f1027f8ff3cc9be7d2f54c4197d9c00d3e0808"
+  },
+  "proxies": [
+    {
+      "address": "0x5D5022061fFfb95EFDFF6bbb1cD3A4Ae4f5d5DeB",
+      "txHash": "0xe60ffcfe3c067763eb4607d4068387be09e64964c23e7eb1be3729277eec1668",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x96Ce84940E7A2B8Ec2Cb3777C20032c1445457a9",
+      "txHash": "0xa6a6e1cadc22a675e39307eed3c6e5e452927287fe3d95ecbccff1127b1f447a",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xFD3d4aAf4cBD23ef84a08BbD3F2167bbDA58cf0f",
+      "txHash": "0x45ddb2a1f0508f1aae9f89d87d514aecb63c6afc6744e1d0c8fdcd3a64f3bd4d",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xeb67Ab721F83B420A3caaDa741cEff5419268319",
+      "txHash": "0x2e6e9fc7a61441b801404443d7bfd352549eb23cc6bd9ce27c2a341f3a7b8cc7",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xa6a479ce6ae5660aA3d78116A35DE14Fa15B0808",
+      "txHash": "0x322bfcbfad613f8e696500f3262023ac542a7719474a2626fcf075f62c74e752",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x8cbEB4e143dE047756B6a723A5fa877B3f340048",
+      "txHash": "0x281ba50981f404e1386954f9e991a8df93cccb1f17af61ab03b7028e258259f7",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "0530bcd0248a5c9751faa24afa7436d5c7fb476aeaa631153d7132c2fe07a98a": {
+      "address": "0x01D1B5Ca6e640B102BDcfeADfb3e9Df4b0B06630",
+      "txHash": "0x932061f05aec7323cd995fb58febd8cba61ca98b640d9acac166784bb591c5e5",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "889ce499a127bbe2e049ed4c5082016d9502618bf3f5bff6574d336f10a113ff": {
+      "address": "0xDbd4197e014706159672DA73634cE2696990F6bA",
+      "txHash": "0x90b3b9381baf4e1594fe2e741326bf4447c81f98962443bba8f3e6e96311e316",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "12e803c496ab4c57a40fd657ac5b13346d7585b823af6dbf735a1b0bd9725bbf": {
+      "address": "0xf001276D7A2fac488be96ca003155AB886C7dCde",
+      "txHash": "0x7d54d252a47f8b0047e981d3cfc32caa421de4ba87ce4461416155f73d8e1c8d",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "_owner",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:488"
+          },
+          {
+            "label": "feesAvailable",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:496"
+          },
+          {
+            "label": "escrows",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_uint256,t_struct(Escrow)1108_storage)",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:507"
+          },
+          {
+            "label": "tokenccy",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(IERC20)462",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:511"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_address_payable": {
+            "label": "address payable",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IERC20)462": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_enum(EscrowStatus)1092": {
+            "label": "enum CriptoCarsEscrow.EscrowStatus",
+            "members": [
+              "Unknown",
+              "Funded",
+              "NOT_USED",
+              "Completed",
+              "Refund",
+              "Arbitration"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_uint256,t_struct(Escrow)1108_storage)": {
+            "label": "mapping(uint256 => struct CriptoCarsEscrow.Escrow)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Escrow)1108_storage": {
+            "label": "struct CriptoCarsEscrow.Escrow",
+            "members": [
+              {
+                "label": "buyer",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "seller",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "value",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "sellerfee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "buyerfee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(EscrowStatus)1092",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "4f8f2d66e3f51b12b0faa319064a3771f43da0e80fab7efcb384ea8b799354e0": {
+      "address": "0xd9856FFa404A1A42E741Eb0A479Ab7d3d608D81b",
+      "txHash": "0x54e6469a834fec6550f38a1a2860fd2e83eca620e0d240e5d27d55992aab3a75",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:74"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:488"
+          },
+          {
+            "label": "feesAvailable",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_uint256",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:496"
+          },
+          {
+            "label": "escrows",
+            "offset": 0,
+            "slot": "53",
+            "type": "t_mapping(t_uint256,t_struct(Escrow)1173_storage)",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:508"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_address_payable": {
+            "label": "address payable",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IERC20)521": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_enum(EscrowStatus)1154": {
+            "label": "enum CriptoCarsEscrow.EscrowStatus",
+            "members": [
+              "Unknown",
+              "Funded",
+              "NOT_USED",
+              "Completed",
+              "Refund",
+              "Arbitration"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_uint256,t_struct(Escrow)1173_storage)": {
+            "label": "mapping(uint256 => struct CriptoCarsEscrow.Escrow)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Escrow)1173_storage": {
+            "label": "struct CriptoCarsEscrow.Escrow",
+            "members": [
+              {
+                "label": "buyer",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "seller",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "value",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "sellerfee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "buyerfee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "currency",
+                "type": "t_contract(IERC20)521",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(EscrowStatus)1154",
+                "offset": 20,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "52bc7e0c1b75d490bd574034e3ba5b957cf013b311f04b7e5a9e2ff83d0677bb": {
+      "address": "0xa4f921738d3735BB751AC533C2be28560a8AceC8",
+      "txHash": "0x875c5f507e731f2ac97a81b2602f32e4a93571b60c6cb39a33f7bdf421b5dff2",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:67"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\ReentrancyGuardUpgradeable.sol:74"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:488"
+          },
+          {
+            "label": "feesAvailable",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_uint256",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:496"
+          },
+          {
+            "label": "escrows",
+            "offset": 0,
+            "slot": "53",
+            "type": "t_mapping(t_uint256,t_struct(Escrow)1173_storage)",
+            "contract": "CriptoCarsEscrow",
+            "src": "contracts\\CriptoCarsEscrow.sol:508"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_address_payable": {
+            "label": "address payable",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IERC20)521": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_enum(EscrowStatus)1154": {
+            "label": "enum CriptoCarsEscrow.EscrowStatus",
+            "members": [
+              "Unknown",
+              "Funded",
+              "NOT_USED",
+              "Completed",
+              "Refund",
+              "Arbitration"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_uint256,t_struct(Escrow)1173_storage)": {
+            "label": "mapping(uint256 => struct CriptoCarsEscrow.Escrow)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Escrow)1173_storage": {
+            "label": "struct CriptoCarsEscrow.Escrow",
+            "members": [
+              {
+                "label": "buyer",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "seller",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "value",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "sellerfee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "buyerfee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "currency",
+                "type": "t_contract(IERC20)521",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(EscrowStatus)1154",
+                "offset": 20,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

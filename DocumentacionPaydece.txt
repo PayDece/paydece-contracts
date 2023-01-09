@@ -1,0 +1,10 @@
+Paso para deploy
+
+0) npx hardhat compile
+1) npx hardhat run --network bsctestnet .\scripts\Paydece\deploy.js
+2) npx hardhat verify --contract "contracts/PaydeceEscrow.sol:PaydeceEscrow"  --network polygontest 0x84E49a18956a96f3d3Ff8A923A783C39a8c01774 "0x605F3453C158ad76238f88152430ADC4328b07B4"
+3) npx hardhat verify --contract "contracts/USDTToken.sol:USDTToken"  --network polygon 0x605F3453C158ad76238f88152430ADC4328b07B4
+
+
+
+npx hardhat verify --contract "contracts/USDTToken.sol:USDTToken"  --network goerli 0x09aE95e93e82168E355a0B36099cd8E0dE50A7d1
