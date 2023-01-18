@@ -908,12 +908,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
 
         uint256 _value = escrows[_orderId].value;
-        address _seller = escrows[_orderId].seller;
+        address _buyer = escrows[_orderId].buyer;
 
         // dont charge seller any fees - because its a refund
         delete escrows[_orderId];
 
-        payable(address(_seller)).transfer(_value);
+        payable(address(_buyer)).transfer(_value);
 
         emit EscrowDisputeResolved(_orderId);
     }
