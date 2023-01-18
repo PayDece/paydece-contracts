@@ -925,9 +925,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         _amount = feesAvailable[_currency];
 
-        _currency.safeTransfer(owner(), _amount);
-
         feesAvailable[_currency] -= _amount;
+
+        _currency.safeTransfer(owner(), _amount);        
     }
 
     function withdrawFeesNativeCoin() external onlyOwner {
