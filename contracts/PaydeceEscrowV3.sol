@@ -875,12 +875,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.Completed;
 
-        //Transfer to sellet Price Asset - FeeSeller
-        //escrows[_orderId].currency.safeTransfer( escrows[_orderId].seller, escrows[_orderId].value - _amountFeeSeller);
-        //payable(address(this)).transfer(escrows[_orderId].seller, escrows[_orderId].value - _amountFeeSeller);
-        escrows[_orderId].seller.transfer(
-            escrows[_orderId].value - _amountFeeSeller
-        );
+        //Transfer to sellet Price Asset - FeeSeller        
+        (bool sent,) = escrows[_orderId].seller.call{value: escrows[_orderId].value - _amountFeeSeller}("");
+        require(sent,"Transfer failed.");
 
         emit EscrowComplete(_orderId, escrows[_orderId]);
         delete escrows[_orderId];
@@ -913,7 +910,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         // dont charge seller any fees - because its a refund
         delete escrows[_orderId];
 
-        payable(address(_buyer)).transfer(_value);
+        //Transfer call
+        (bool sent,) = payable(address(_buyer)).call{value: _value}("");
+        require(sent,"Transfer failed.");
 
         emit EscrowDisputeResolved(_orderId);
     }
@@ -942,8 +941,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         feesAvailableNativeCoin -= _amount;
 
-        //_currency.safeTransfer(owner(), _amount);
-        payable(msg.sender).transfer(_amount);
+        //Transfer
+        (bool sent,) = payable(msg.sender).call{value: _amount}("");
+        require(sent,"Transfer failed.");
     }
 
     function addStablesAddresses(
