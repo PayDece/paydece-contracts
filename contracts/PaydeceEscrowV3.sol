@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
+
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
@@ -90,6 +91,7 @@ interface IERC20 {
         uint256 value
     );
 }
+
 
 /**
  * @dev Collection of functions related to the address type
@@ -332,6 +334,7 @@ library Address {
     }
 }
 
+
 /**
  * @title SafeERC20
  * @dev Wrappers around ERC20 operations that throw on failure (when the token
@@ -452,8 +455,6 @@ library SafeERC20 {
     }
 }
 
-//import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-//pragma solidity ^0.8.0;
 
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
@@ -520,11 +521,6 @@ abstract contract ReentrancyGuard {
     }
 }
 
-//import "@openzeppelin/contracts/access/Ownable.sol";
-//pragma solidity ^0.8.0;
-
-//import "../utils/Context.sol";
-//pragma solidity ^0.8.0;
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -545,6 +541,7 @@ abstract contract Context {
         return msg.data;
     }
 }
+
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -629,6 +626,7 @@ abstract contract Ownable is Context {
     }
 }
 
+
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowDeposit(uint indexed orderId, Escrow escrow);
     event EscrowComplete(uint indexed orderId, Escrow escrow);
@@ -700,10 +698,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     // Seters getters
     function setFeeSeller(uint256 _feeSeller) external onlyOwner {
+        require(_feeSeller>=0 && _feeSeller<=(1*1000),"The fee can be from 0% to 1%");
         feeSeller = _feeSeller;
     }
 
     function setFeeBuyer(uint256 _feeBuyer) external onlyOwner {
+        require(_feeBuyer>=0 && _feeBuyer<=(1*1000),"The fee can be from 0% to 1%");
         feeBuyer = _feeBuyer;
     }
 
@@ -714,7 +714,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     /* This is called by the server / contract owner */
-    function createEscrow(
+    function createEscrow(        
         uint _orderId,
         address payable _seller,
         uint256 _value,
