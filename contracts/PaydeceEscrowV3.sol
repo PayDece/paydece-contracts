@@ -632,8 +632,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowComplete(uint indexed orderId, Escrow escrow);
     event EscrowDisputeResolved(uint indexed orderId);
 
-    event Log(string step, uint256 data);
-
     enum EscrowStatus {
         Unknown,
         Funded,
@@ -865,12 +863,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             (escrows[_orderId].sellerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
-        emit Log("_amountFeeBuyer", _amountFeeBuyer);
-        emit Log("_amountFeeSeller", _amountFeeSeller);
-
         //Registra los fees obtenidos para Paydece
         feesAvailableNativeCoin += _amountFeeBuyer + _amountFeeSeller;
-        emit Log("feesAvailableNativeCoin", feesAvailableNativeCoin);
 
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.Completed;
