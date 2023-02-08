@@ -1,11 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
 interface IERC20 {
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+
     function decimals() external view returns (uint8);
 
     /**
@@ -72,26 +89,7 @@ interface IERC20 {
         address recipient,
         uint256 amount
     ) external returns (bool);
-
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
 }
-
 
 /**
  * @dev Collection of functions related to the address type
@@ -334,7 +332,6 @@ library Address {
     }
 }
 
-
 /**
  * @title SafeERC20
  * @dev Wrappers around ERC20 operations that throw on failure (when the token
@@ -455,7 +452,6 @@ library SafeERC20 {
     }
 }
 
-
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
  *
@@ -521,7 +517,6 @@ abstract contract ReentrancyGuard {
     }
 }
 
-
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -541,7 +536,6 @@ abstract contract Context {
         return msg.data;
     }
 }
-
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -626,50 +620,19 @@ abstract contract Ownable is Context {
     }
 }
 
-
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
-    event EscrowDeposit(uint indexed orderId, Escrow escrow);
-    event EscrowComplete(uint indexed orderId, Escrow escrow);
-    event EscrowDisputeResolved(uint indexed orderId);
-
-    enum EscrowStatus {
-        Unknown,
-        Funded,
-        NOT_USED,
-        Completed,
-        Refund,
-        Arbitration
-    }
-
     // 0.1 es 100 porque se multiplico por mil => 0.1 X 1000 = 100
     uint256 public feeSeller;
     uint256 public feeBuyer;
-
-    struct Escrow {
-        address payable buyer; //Comprador
-        address payable seller; //Vendedor
-        uint256 value; //Monto compra
-        uint256 sellerfee; //Comision vendedor
-        uint256 buyerfee; //Comision comprador
-        IERC20 currency; //Moneda
-        EscrowStatus status; //Estado
-    }
-
-    mapping(uint => Escrow) public escrows;
-
-    mapping(address => bool) whitelistedStablesAddresses;
-
+    uint256 public feesAvailableNativeCoin;
     using SafeERC20 for IERC20;
-
-    //uint256 private feesAvailable;  // summation of fees that can be withdrawn
+    mapping(uint => Escrow) public escrows;
+    mapping(address => bool) whitelistedStablesAddresses;
     mapping(IERC20 => uint) public feesAvailable;
 
-    uint256 public feesAvailableNativeCoin;
-
-    constructor() {
-        feeSeller = 0;
-        feeBuyer = 0;
-    }
+    event EscrowDeposit(uint indexed orderId, Escrow escrow);
+    event EscrowComplete(uint indexed orderId, Escrow escrow);
+    event EscrowDisputeResolved(uint indexed orderId);
 
     // Buyer defined as who buys usdt
     modifier onlyBuyer(uint _orderId) {
@@ -689,30 +652,51 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         _;
     }
 
-    function getState(uint _orderId) public view returns (EscrowStatus) {
-        Escrow memory _escrow = escrows[_orderId];
-        return _escrow.status;
+    enum EscrowStatus {
+        Unknown,
+        Funded,
+        NOT_USED,
+        Completed,
+        Refund,
+        Arbitration
     }
 
-    // Seters getters
+    struct Escrow {
+        address payable buyer; //Comprador
+        address payable seller; //Vendedor
+        uint256 value; //Monto compra
+        uint256 sellerfee; //Comision vendedor
+        uint256 buyerfee; //Comision comprador
+        IERC20 currency; //Moneda
+        EscrowStatus status; //Estado
+    }
+
+    //uint256 private feesAvailable;  // summation of fees that can be withdrawn
+
+    constructor() {
+        feeSeller = 0;
+        feeBuyer = 0;
+    }
+
+    // ================== Begin External functions ==================
     function setFeeSeller(uint256 _feeSeller) external onlyOwner {
-        require(_feeSeller>=0 && _feeSeller<=(1*1000),"The fee can be from 0% to 1%");
+        require(
+            _feeSeller >= 0 && _feeSeller <= (1 * 1000),
+            "The fee can be from 0% to 1%"
+        );
         feeSeller = _feeSeller;
     }
 
     function setFeeBuyer(uint256 _feeBuyer) external onlyOwner {
-        require(_feeBuyer>=0 && _feeBuyer<=(1*1000),"The fee can be from 0% to 1%");
+        require(
+            _feeBuyer >= 0 && _feeBuyer <= (1 * 1000),
+            "The fee can be from 0% to 1%"
+        );
         feeBuyer = _feeBuyer;
     }
 
-    // Get the amount of transaction
-    function getValue(uint _orderId) public view returns (uint256) {
-        Escrow memory _escrow = escrows[_orderId];
-        return _escrow.value;
-    }
-
     /* This is called by the server / contract owner */
-    function createEscrow(        
+    function createEscrow(
         uint _orderId,
         address payable _seller,
         uint256 _value,
@@ -813,6 +797,105 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         _releaseEscrowNativeCoin(_orderId);
     }
 
+    /// release funds to the buyer - cancelled contract
+    function refundBuyer(uint _orderId) external nonReentrant onlyOwner {
+        //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
+
+        uint256 _value = escrows[_orderId].value;
+        address _buyer = escrows[_orderId].buyer;
+        IERC20 _currency = escrows[_orderId].currency;
+
+        // dont charge seller any fees - because its a refund
+        delete escrows[_orderId];
+
+        _currency.safeTransfer(_buyer, _value);
+
+        emit EscrowDisputeResolved(_orderId);
+    }
+
+    function refundBuyerNativeCoin(
+        uint _orderId
+    ) external nonReentrant onlyOwner {
+        //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
+
+        uint256 _value = escrows[_orderId].value;
+        address _buyer = escrows[_orderId].buyer;
+
+        // dont charge seller any fees - because its a refund
+        delete escrows[_orderId];
+
+        //Transfer call
+        (bool sent, ) = payable(address(_buyer)).call{value: _value}("");
+        require(sent, "Transfer failed.");
+
+        emit EscrowDisputeResolved(_orderId);
+    }
+
+    function withdrawFees(IERC20 _currency) external onlyOwner {
+        uint _amount;
+
+        // This check also prevents underflow
+        require(feesAvailable[_currency] > 0, "Amount > feesAvailable");
+
+        _amount = feesAvailable[_currency];
+
+        feesAvailable[_currency] -= _amount;
+
+        _currency.safeTransfer(owner(), _amount);
+    }
+
+    function withdrawFeesNativeCoin() external onlyOwner {
+        uint256 _amount;
+
+        // This check also prevents underflow
+        require(feesAvailableNativeCoin > 0, "Amount > feesAvailable");
+
+        //_amount = feesAvailable[_currency];
+        _amount = feesAvailableNativeCoin;
+
+        feesAvailableNativeCoin -= _amount;
+
+        //Transfer
+        (bool sent, ) = payable(msg.sender).call{value: _amount}("");
+        require(sent, "Transfer failed.");
+    }
+
+    // ================== End External functions ==================
+
+    // ================== Begin External functions that are pure ==================
+    function version() external pure virtual returns (string memory) {
+        return "3.0.0";
+    }
+
+    // ================== End External functions that are pure ==================
+
+    /// ================== Begin Public functions ==================
+    function getState(uint _orderId) public view returns (EscrowStatus) {
+        Escrow memory _escrow = escrows[_orderId];
+        return _escrow.status;
+    }
+
+    // Get the amount of transaction
+    function getValue(uint _orderId) public view returns (uint256) {
+        Escrow memory _escrow = escrows[_orderId];
+        return _escrow.value;
+    }
+
+    function addStablesAddresses(
+        address _addressStableToWhitelist
+    ) public onlyOwner {
+        whitelistedStablesAddresses[_addressStableToWhitelist] = true;
+    }
+
+    function delStablesAddresses(
+        address _addressStableToWhitelist
+    ) public onlyOwner {
+        whitelistedStablesAddresses[_addressStableToWhitelist] = false;
+    }
+
+    /// ================== End Public functions ==================
+
+    // ================== Begin Private functions ==================
     function _releaseEscrow(uint _orderId) private nonReentrant {
         require(
             escrows[_orderId].status == EscrowStatus.Funded,
@@ -869,90 +952,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.Completed;
 
-        //Transfer to sellet Price Asset - FeeSeller        
-        (bool sent,) = escrows[_orderId].seller.call{value: escrows[_orderId].value - _amountFeeSeller}("");
-        require(sent,"Transfer failed.");
+        //Transfer to sellet Price Asset - FeeSeller
+        (bool sent, ) = escrows[_orderId].seller.call{
+            value: escrows[_orderId].value - _amountFeeSeller
+        }("");
+        require(sent, "Transfer failed.");
 
         emit EscrowComplete(_orderId, escrows[_orderId]);
         delete escrows[_orderId];
     }
-
-    /// release funds to the buyer - cancelled contract
-    function refundBuyer(uint _orderId) external nonReentrant onlyOwner {
-        //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
-
-        uint256 _value = escrows[_orderId].value;
-        address _buyer = escrows[_orderId].buyer;
-        IERC20 _currency = escrows[_orderId].currency;
-
-        // dont charge seller any fees - because its a refund
-        delete escrows[_orderId];
-
-        _currency.safeTransfer(_buyer, _value);
-
-        emit EscrowDisputeResolved(_orderId);
-    }
-
-    function refundBuyerNativeCoin(
-        uint _orderId
-    ) external nonReentrant onlyOwner {
-        //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
-
-        uint256 _value = escrows[_orderId].value;
-        address _buyer = escrows[_orderId].buyer;
-
-        // dont charge seller any fees - because its a refund
-        delete escrows[_orderId];
-
-        //Transfer call
-        (bool sent,) = payable(address(_buyer)).call{value: _value}("");
-        require(sent,"Transfer failed.");
-
-        emit EscrowDisputeResolved(_orderId);
-    }
-
-    function withdrawFees(IERC20 _currency) external onlyOwner {
-        uint _amount;
-
-        // This check also prevents underflow
-        require(feesAvailable[_currency] > 0, "Amount > feesAvailable");
-
-        _amount = feesAvailable[_currency];
-
-        feesAvailable[_currency] -= _amount;
-
-        _currency.safeTransfer(owner(), _amount);        
-    }
-
-    function withdrawFeesNativeCoin() external onlyOwner {
-        uint256 _amount;
-
-        // This check also prevents underflow
-        require(feesAvailableNativeCoin > 0, "Amount > feesAvailable");
-
-        //_amount = feesAvailable[_currency];
-        _amount = feesAvailableNativeCoin;
-
-        feesAvailableNativeCoin -= _amount;
-
-        //Transfer
-        (bool sent,) = payable(msg.sender).call{value: _amount}("");
-        require(sent,"Transfer failed.");
-    }
-
-    function addStablesAddresses(
-        address _addressStableToWhitelist
-    ) public onlyOwner {
-        whitelistedStablesAddresses[_addressStableToWhitelist] = true;
-    }
-
-    function delStablesAddresses(
-        address _addressStableToWhitelist
-    ) public onlyOwner {
-        whitelistedStablesAddresses[_addressStableToWhitelist] = false;
-    }
-
-    function version() external pure virtual returns (string memory) {
-        return "3.0.0";
-    }
+    // ================== End Private functions ==================
 }

@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, providers } = require("hardhat");
 
 describe("setFeeSeller", () => {
   it("should revert with message 'The fee can be from 0% to 1%", async () => {
@@ -26,6 +26,24 @@ describe("setFeeBuyer", () => {
     await expect(paydeceEscrow.setFeeBuyer(1001)).to.be.revertedWith(
       "The fee can be from 0% to 1%"
     );
+  });
+});
+
+describe("addStablesAddresses & delStablesAddresses", () => {
+  it("you should add and remove the EC20 stable addresses", async () => {
+    let PaydeceEscrow, paydeceEscrow;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    const usdtAddress = "0x55d398326f99059fF775485246999027B3197955";
+    await paydeceEscrow.addStablesAddresses(usdtAddress);
+    await paydeceEscrow.delStablesAddresses(usdtAddress);
+
+    const usdcAddress = "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d";
+    await paydeceEscrow.addStablesAddresses(usdcAddress);
+    await paydeceEscrow.delStablesAddresses(usdcAddress);
   });
 });
 
@@ -140,7 +158,59 @@ describe("PaydeceEscrow StableCoin", function () {
     expect(Number(sellerBalance)).to.equal(Number(99 * 10 ** decimals));
   });
 
-  it("should feesAvailable StableCoin", async function () {
+  it("should refund to Buyer StableCoin", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Seller, Buyer] = await ethers.getSigners();
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeSeller("1000");
+
+    //call addStablesAddresses
+    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
+
+    //Set amount
+    const decimals = await usdt.connect(Buyer).decimals();
+    const ammount = 100 * 10 ** decimals;
+    //  console.log("ammount:"+ammount)
+
+    //transfer
+    await usdt.transfer(Buyer.address, ammount);
+
+    //call approve
+    await usdt.connect(Buyer).approve(paydeceEscrow.address, ammount);
+
+    //call createEscrow
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrow("1", Seller.address, ammount, usdt.address);
+
+    //call refundBuyer
+    await paydeceEscrow.connect(owner).refundBuyer("1");
+
+    //get Balance
+    const scBalance = await usdt.balanceOf(paydeceEscrow.address);
+    //  console.log("==========scBalance:"+scBalance)
+    expect(Number(scBalance)).to.equal(Number(0));
+    const buyerBalance = await usdt.balanceOf(Buyer.address);
+    //  console.log("==========buyerBalance:"+buyerBalance)
+    expect(Number(buyerBalance)).to.equal(Number(100 * 10 ** decimals));
+    const sellerBalance = await usdt.balanceOf(Seller.address);
+    //  console.log("==========sellerBalance:"+sellerBalance)
+    expect(Number(sellerBalance)).to.equal(Number(0));
+  });
+
+  it("should feesAvailable & withdrawFees StableCoin", async function () {
     let PaydeceEscrow, paydeceEscrow;
     let USDT, usdt;
 
@@ -199,58 +269,6 @@ describe("PaydeceEscrow StableCoin", function () {
     expect(Number(scAfterBalance)).to.equal(
       Number(scBalance) + Number(_feesAvailable)
     );
-  });
-
-  it("should refund to Buyer StableCoin", async function () {
-    let PaydeceEscrow, paydeceEscrow;
-    let USDT, usdt;
-
-    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
-    await paydeceEscrow.deployed();
-
-    // Deploy USDT
-    USDT = await ethers.getContractFactory("USDTToken");
-    usdt = await USDT.deploy();
-    await usdt.deployed();
-
-    const [owner, Seller, Buyer] = await ethers.getSigners();
-
-    //Set Fee to 1%
-    await paydeceEscrow.connect(owner).setFeeSeller("1000");
-
-    //call addStablesAddresses
-    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
-
-    //Set amount
-    const decimals = await usdt.connect(Buyer).decimals();
-    const ammount = 100 * 10 ** decimals;
-    //  console.log("ammount:"+ammount)
-
-    //transfer
-    await usdt.transfer(Buyer.address, ammount);
-
-    //call approve
-    await usdt.connect(Buyer).approve(paydeceEscrow.address, ammount);
-
-    //call createEscrow
-    await paydeceEscrow
-      .connect(Buyer)
-      .createEscrow("1", Seller.address, ammount, usdt.address);
-
-    //call refundBuyer
-    await paydeceEscrow.connect(owner).refundBuyer("1");
-
-    //get Balance
-    const scBalance = await usdt.balanceOf(paydeceEscrow.address);
-    //  console.log("==========scBalance:"+scBalance)
-    expect(Number(scBalance)).to.equal(Number(0));
-    const buyerBalance = await usdt.balanceOf(Buyer.address);
-    //  console.log("==========buyerBalance:"+buyerBalance)
-    expect(Number(buyerBalance)).to.equal(Number(100 * 10 ** decimals));
-    const sellerBalance = await usdt.balanceOf(Seller.address);
-    //  console.log("==========sellerBalance:"+sellerBalance)
-    expect(Number(sellerBalance)).to.equal(Number(0));
   });
 });
 
@@ -407,5 +425,263 @@ describe("PaydeceEscrow NativeCoin", function () {
     // expect(Number(afterbalanceSC)).to.equal(Number(ethers.utils.parseUnits("1", "ether")));
 
     // expect(Number(buyerBalance)).to.be.at.least(Number(ethers.utils.parseUnits("99", "ether")));
+  });
+
+  it("should feesAvailableNativeCoin & withdrawFeesNativeCoin NativeCoin", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    const [owner, Seller, Buyer, other] = await ethers.getSigners();
+    // console.log(owner.address)
+
+    const initBuyerBalance = await ethers.provider.getBalance(Seller.address);
+    const initSellerBalance = await ethers.provider.getBalance(Buyer.address);
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeSeller("1000");
+
+    //call createEscrow
+    const ammount = ethers.utils.parseUnits("100", "ether"); //1 ether
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrowNativeCoin("2", Seller.address, ammount, { value: ammount });
+
+    //call releaseEscrow
+    await paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2");
+
+    //get balance SC paydece
+    const afterbalanceSC = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+    // console.log("afterbalanceSC:"+afterbalanceSC.toString())
+    // 1 is expected because 1% of 100
+    expect(Number(afterbalanceSC)).to.equal(
+      Number(ethers.utils.parseUnits("1", "ether"))
+    );
+
+    buyerBalance = await ethers.provider.getBalance(Buyer.address);
+    // console.log("buyerBalance:"+buyerBalance.toString())
+
+    // console.log("ammount:"+ammount)
+
+    sellerBalance = await ethers.provider.getBalance(Seller.address);
+    // console.log("sellerBalance:"+sellerBalance.toString())
+    // expect(Number(sellerBalance)).to.equal(Number(initSellerBalance)+Number(ethers.utils.parseUnits("99", "ether")));
+
+    const _feesAvailable = await paydeceEscrow
+      .connect(owner)
+      .feesAvailableNativeCoin();
+
+    const scBalance = await ethers.provider.getBalance(owner.address);
+    //withdrawFees
+    const _releaseEscrowOwner = await paydeceEscrow
+      .connect(owner)
+      .withdrawFeesNativeCoin();
+
+    const txReceipt = await _releaseEscrowOwner.wait();
+    const effGasPrice = txReceipt.effectiveGasPrice;
+    const txGasUsed = txReceipt.gasUsed;
+    const gasUsedETH = effGasPrice * txGasUsed;
+    // console.debug(
+    //   "Total Gas USD: " + ethers.utils.formatEther(gasUsedETH.toString()) // exchange rate today
+    // );
+
+    //get Balance
+    const scAfterBalance = await ethers.provider.getBalance(owner.address);
+    // console.log("scAfterBalance:" + scAfterBalance);
+
+    expect(Number(scAfterBalance)).to.equal(
+      Number(scBalance) + Number(_feesAvailable) - Number(gasUsedETH)
+    );
+  });
+});
+
+describe("Contract Ownership", () => {
+  it("you should transfer Ownership", async () => {
+    let PaydeceEscrow, paydeceEscrow;
+    const [owner, newOwner] = await ethers.getSigners();
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    await paydeceEscrow.transferOwnership(newOwner.address);
+
+    const _owner = await paydeceEscrow.owner();
+    // console.log("_owner:" + _owner);
+    expect(_owner).to.equal(newOwner.address);
+  });
+
+  it("you should renounce Ownership", async () => {
+    let PaydeceEscrow, paydeceEscrow;
+    //const [owner, newOwner] = await ethers.getSigners();
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    await paydeceEscrow.renounceOwnership();
+
+    const _owner = await paydeceEscrow.owner();
+    // console.log("_owner:" + _owner);
+    expect(_owner).to.equal("0x0000000000000000000000000000000000000000");
+  });
+
+  it("should create a escrow and get state equal 1", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Seller, Buyer, other] = await ethers.getSigners();
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeSeller("1000");
+
+    //call addStablesAddresses
+    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
+
+    //Set amount
+    const decimals = await usdt.connect(Buyer).decimals();
+    const ammount = 100 * 10 ** decimals;
+    //  console.log("ammount:"+ammount)
+
+    //transfer
+    await usdt.transfer(Buyer.address, ammount);
+
+    //call approve
+    await usdt.connect(Buyer).approve(paydeceEscrow.address, ammount);
+
+    //call createEscrow
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrow("1", Seller.address, ammount, usdt.address);
+
+    //call getState
+    const _state = await paydeceEscrow.getState("1");
+    // console.log("_state:" + _state);
+    const _FundedState = 1;
+    expect(_state).to.equal(_FundedState);
+  });
+
+  it("should create a escrow and get value equal 1", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Seller, Buyer, other] = await ethers.getSigners();
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeSeller("1000");
+
+    //call addStablesAddresses
+    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
+
+    //Set amount
+    const decimals = await usdt.connect(Buyer).decimals();
+    const ammount = 100 * 10 ** decimals;
+    //  console.log("ammount:"+ammount)
+
+    //transfer
+    await usdt.transfer(Buyer.address, ammount);
+
+    //call approve
+    await usdt.connect(Buyer).approve(paydeceEscrow.address, ammount);
+
+    //call createEscrow
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrow("1", Seller.address, ammount, usdt.address);
+
+    //call getState
+    const _value = await paydeceEscrow.getValue("1");
+    //console.table(_state);
+    // const _FundedState = 1;
+    expect(_value).to.equal(ammount);
+  });
+
+  it("should create a escrow and get Escrow", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Seller, Buyer, other] = await ethers.getSigners();
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeSeller("1000");
+
+    //call addStablesAddresses
+    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
+
+    //Set amount
+    const decimals = await usdt.connect(Buyer).decimals();
+    const ammount = 100 * 10 ** decimals;
+    //  console.log("ammount:"+ammount)
+
+    //transfer
+    await usdt.transfer(Buyer.address, ammount);
+
+    //call approve
+    await usdt.connect(Buyer).approve(paydeceEscrow.address, ammount);
+
+    //call createEscrow
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrow("1", Seller.address, ammount, usdt.address);
+
+    //call getState
+    const _escrow = await paydeceEscrow.escrows("1");
+    // console.table(_escrow);
+    // console.debug("_escrow.Buyer:" + _escrow.buyer);
+    // const _FundedState = 1;
+    expect(_escrow.buyer).to.equal(Buyer.address);
+    expect(_escrow.seller).to.equal(Seller.address);
+    expect(_escrow.value).to.equal(ammount);
+    expect(_escrow.sellerfee).to.equal(1000);
+    expect(_escrow.buyerfee).to.equal(0);
+    expect(_escrow.currency).to.equal(usdt.address);
+    expect(_escrow.status).to.equal(1);
+  });
+});
+
+describe("Contract Read Methods", () => {
+  it("version should be 3.0.0", async () => {
+    let PaydeceEscrow, paydeceEscrow;
+    const [owner, newOwner] = await ethers.getSigners();
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    const _verion = await paydeceEscrow.version();
+
+    //console.log("_verion:" + _verion);
+    expect(_verion).to.equal("3.0.0");
   });
 });
