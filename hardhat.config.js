@@ -4,6 +4,7 @@ require("@openzeppelin/hardhat-upgrades");
 require("@openzeppelin/hardhat-defender");
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
+require("solidity-coverage");
 
 const mnemonic = process.env.MNEMONIC;
 const mnemonic2 = process.env.mnemonic2;

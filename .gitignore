@@ -4,3 +4,8 @@ node_modules
 #Hardhat files
 cache
 artifacts
+
+#solidity-coverage
+coverage
+coverage.json
+.DS_Store
