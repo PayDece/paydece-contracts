@@ -1,4 +1,4 @@
-# Paydece Smart Contract V3
+# Paydece Escrow V3
 
 https://paydece.io
 
