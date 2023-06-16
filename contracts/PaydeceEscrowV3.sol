@@ -10,8 +10,8 @@ import './Ownable.sol';
 
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
     // 0.1 es 100 porque se multiplico por mil => 0.1 X 1000 = 100
-    uint256 public feeSeller;
-    uint256 public feeBuyer;
+    uint256 public feeTaker;
+    uint256 public feeMaker;
     uint256 public feesAvailableNativeCoin;
     using SafeERC20 for IERC20;
     mapping(uint => Escrow) public escrows;
@@ -22,23 +22,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowComplete(uint indexed orderId, Escrow escrow);
     event EscrowDisputeResolved(uint indexed orderId);
 
-    // Buyer defined as who buys usdt
-    modifier onlyBuyer(uint _orderId) {
+    // Maker defined as who buys usdt
+    modifier onlyMaker(uint _orderId) {
         require(
-            msg.sender == escrows[_orderId].buyer,
-            "Only Buyer can call this"
+            msg.sender == escrows[_orderId].maker,
+            "Only Maker can call this"
         );
         _;
     }
-
-    // Seller defined as who sells usdt
-    // modifier onlySeller(uint _orderId) {
-    //     require(
-    //         msg.sender == escrows[_orderId].seller,
-    //         "Only Seller can call this"
-    //     );
-    //     _;
-    // }
 
     enum EscrowStatus {
         Unknown,
@@ -50,11 +41,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     struct Escrow {
-        address payable buyer; //Comprador
-        address payable seller; //Vendedor
+        address payable maker; //Comprador
+        address payable taker; //Vendedor
         uint256 value; //Monto compra
-        uint256 sellerfee; //Comision vendedor
-        uint256 buyerfee; //Comision comprador
+        uint256 takerfee; //Comision vendedor
+        uint256 makerfee; //Comision comprador
         IERC20 currency; //Moneda
         EscrowStatus status; //Estado
     }
@@ -62,31 +53,31 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     //uint256 private feesAvailable;  // summation of fees that can be withdrawn
 
     constructor() {
-        feeSeller = 0;
-        feeBuyer = 0;
+        feeTaker = 0;
+        feeMaker = 0;
     }
 
     // ================== Begin External functions ==================
-    function setFeeSeller(uint256 _feeSeller) external onlyOwner {
+    function setFeeTaker(uint256 _feeTaker) external onlyOwner {
         require(
-            _feeSeller >= 0 && _feeSeller <= (1 * 1000),
+            _feeTaker >= 0 && _feeTaker <= (1 * 1000),
             "The fee can be from 0% to 1%"
         );
-        feeSeller = _feeSeller;
+        feeTaker = _feeTaker;
     }
 
-    function setFeeBuyer(uint256 _feeBuyer) external onlyOwner {
+    function setFeeMaker(uint256 _feeMaker) external onlyOwner {
         require(
-            _feeBuyer >= 0 && _feeBuyer <= (1 * 1000),
+            _feeMaker >= 0 && _feeMaker <= (1 * 1000),
             "The fee can be from 0% to 1%"
         );
-        feeBuyer = _feeBuyer;
+        feeMaker = _feeMaker;
     }
 
     /* This is called by the server / contract owner */
     function createEscrow(
         uint _orderId,
-        address payable _seller,
+        address payable _taker,
         uint256 _value,
         IERC20 _currency
     ) external virtual {
@@ -100,33 +91,33 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Address Stable to be whitelisted"
         );
 
-        require(msg.sender != _seller, "seller cannot be the same as buyer");
+        require(msg.sender != _taker, "taker cannot be the same as maker");
 
         uint8 _decimals = _currency.decimals();
         //Obtiene el monto a transferir desde el comprador al contrato
-        uint256 _amountFeeBuyer = ((_value * (feeBuyer * 10 ** _decimals)) /
+        uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
         //Valida el Allowance
         uint256 _allowance = _currency.allowance(msg.sender, address(this));
         require(
-            _allowance >= (_value + _amountFeeBuyer),
-            "Seller approve to Escrow first"
+            _allowance >= (_value + _amountFeeMaker),
+            "Taker approve to Escrow first"
         );
 
         //Transfer USDT to contract
         _currency.safeTransferFrom(
             msg.sender,
             address(this),
-            (_value + _amountFeeBuyer)
+            (_value + _amountFeeMaker)
         );
 
         escrows[_orderId] = Escrow(
             payable(msg.sender),
-            _seller,
+            _taker,
             _value,
-            feeSeller,
-            feeBuyer,
+            feeTaker,
+            feeMaker,
             _currency,
             EscrowStatus.Funded
         );
@@ -136,7 +127,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     function createEscrowNativeCoin(
         uint _orderId,
-        address payable _seller,
+        address payable _taker,
         uint256 _value
     ) external payable virtual {
         require(
@@ -144,21 +135,21 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Escrow already exists"
         );
 
-        require(msg.sender != _seller, "seller cannot be the same as buyer");
+        require(msg.sender != _taker, "Taker cannot be the same as maker");
 
         uint8 _decimals = 18;
         //Obtiene el monto a transferir desde el comprador al contrato
-        uint256 _amountFeeBuyer = ((_value * (feeBuyer * 10 ** _decimals)) /
+        uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
-        require((_value + _amountFeeBuyer) <= msg.value, "Incorrect amount");
+        require((_value + _amountFeeMaker) <= msg.value, "Incorrect amount");
 
         escrows[_orderId] = Escrow(
             payable(msg.sender),
-            _seller,
+            _taker,
             _value,
-            feeSeller,
-            feeBuyer,
+            feeTaker,
+            feeMaker,
             IERC20(address(0)),
             EscrowStatus.Funded
         );
@@ -174,46 +165,41 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         _releaseEscrowNativeCoin(_orderId);
     }
 
-    /* This is called by the buyer wallet */
-    function releaseEscrow(uint _orderId) external onlyBuyer(_orderId) {
+    /* This is called by the maker wallet */
+    function releaseEscrow(uint _orderId) external onlyMaker(_orderId) {
         _releaseEscrow(_orderId);
     }
 
     function releaseEscrowNativeCoin(
         uint _orderId
-    ) external onlyBuyer(_orderId) {
+    ) external onlyMaker(_orderId) {
         _releaseEscrowNativeCoin(_orderId);
     }
 
-    /// release funds to the buyer - cancelled contract
-    function refundBuyer(uint _orderId) external nonReentrant onlyOwner {
+    /// release funds to the maker - cancelled contract
+    function refundMaker(uint _orderId) external nonReentrant onlyOwner {
         //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
 
         uint256 _value = escrows[_orderId].value;
-        address _buyer = escrows[_orderId].buyer;
-        IERC20 _currency = escrows[_orderId].currency;
+        address _maker = escrows[_orderId].maker;
+        IERC20 _currency = escrows[_orderId].currency;        
 
-        // dont charge seller any fees - because its a refund
-        delete escrows[_orderId];
-
-        _currency.safeTransfer(_buyer, _value);
+        _currency.safeTransfer(_maker, _value);
 
         emit EscrowDisputeResolved(_orderId);
     }
 
-    function refundBuyerNativeCoin(
+    function refundMakerNativeCoin(
         uint _orderId
     ) external nonReentrant onlyOwner {
         //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
 
         uint256 _value = escrows[_orderId].value;
-        address _buyer = escrows[_orderId].buyer;
+        address _maker = escrows[_orderId].maker;
 
-        // dont charge seller any fees - because its a refund
-        delete escrows[_orderId];
 
         //Transfer call
-        (bool sent, ) = payable(address(_buyer)).call{value: _value}("");
+        (bool sent, ) = payable(address(_maker)).call{value: _value}("");
         require(sent, "Transfer failed.");
 
         emit EscrowDisputeResolved(_orderId);
@@ -252,7 +238,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     // ================== Begin External functions that are pure ==================
     function version() external pure virtual returns (string memory) {
-        return "3.0.0";
+        return "4.0.0";
     }
 
     // ================== End External functions that are pure ==================
@@ -292,30 +278,30 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         uint8 _decimals = escrows[_orderId].currency.decimals();
 
-        //Obtiene el monto a transferir desde el comprador al contrato        //sellerfee //buyerfee
-        uint256 _amountFeeBuyer = ((escrows[_orderId].value *
-            (escrows[_orderId].buyerfee * 10 ** _decimals)) /
+        //Obtiene el monto a transferir desde el comprador al contrato        //takerfee //makerfee
+        uint256 _amountFeeMaker = ((escrows[_orderId].value *
+            (escrows[_orderId].makerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
-        uint256 _amountFeeSeller = ((escrows[_orderId].value *
-            (escrows[_orderId].sellerfee * 10 ** _decimals)) /
+        uint256 _amountFeeTaker = ((escrows[_orderId].value *
+            (escrows[_orderId].takerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
-        //feesAvailable += _amountFeeBuyer + _amountFeeSeller;
+        //feesAvailable += _amountFeeMaker + _amountFeeTaker;
         feesAvailable[escrows[_orderId].currency] +=
-            _amountFeeBuyer +
-            _amountFeeSeller;
+            _amountFeeMaker +
+            _amountFeeTaker;
 
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.Completed;
 
-        //Transfer to sellet Price Asset - FeeSeller
+        //Transfer to taker Price Asset - FeeTaker
         escrows[_orderId].currency.safeTransfer(
-            escrows[_orderId].seller,
-            escrows[_orderId].value - _amountFeeSeller
+            escrows[_orderId].taker,
+            escrows[_orderId].value - _amountFeeTaker
         );
 
         emit EscrowComplete(_orderId, escrows[_orderId]);
-        delete escrows[_orderId];
+        
     }
 
     function _releaseEscrowNativeCoin(uint _orderId) private nonReentrant {
@@ -326,28 +312,28 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         uint8 _decimals = 18; //Wei
 
-        //Obtiene el monto a transferir desde el comprador al contrato        //sellerfee //buyerfee
-        uint256 _amountFeeBuyer = ((escrows[_orderId].value *
-            (escrows[_orderId].buyerfee * 10 ** _decimals)) /
+        //Obtiene el monto a transferir desde el comprador al contrato        //takerfee //makerfee
+        uint256 _amountFeeMaker = ((escrows[_orderId].value *
+            (escrows[_orderId].makerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
-        uint256 _amountFeeSeller = ((escrows[_orderId].value *
-            (escrows[_orderId].sellerfee * 10 ** _decimals)) /
+        uint256 _amountFeeTaker = ((escrows[_orderId].value *
+            (escrows[_orderId].takerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
         //Registra los fees obtenidos para Paydece
-        feesAvailableNativeCoin += _amountFeeBuyer + _amountFeeSeller;
+        feesAvailableNativeCoin += _amountFeeMaker + _amountFeeTaker;
 
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.Completed;
 
-        //Transfer to sellet Price Asset - FeeSeller
-        (bool sent, ) = escrows[_orderId].seller.call{
-            value: escrows[_orderId].value - _amountFeeSeller
+        //Transfer to taker Price Asset - FeeTaker
+        (bool sent, ) = escrows[_orderId].taker.call{
+            value: escrows[_orderId].value - _amountFeeTaker
         }("");
         require(sent, "Transfer failed.");
 
         emit EscrowComplete(_orderId, escrows[_orderId]);
-        delete escrows[_orderId];
+        
     }
     // ================== End Private functions ==================
 }

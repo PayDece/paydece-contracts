@@ -7,8 +7,8 @@ require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
 
 const mnemonic = process.env.MNEMONIC;
-const mnemonic2 = process.env.mnemonic2;
-const mnemonicpaydece = process.env.mnemonicpaydece;
+const mnemonic2 = process.env.MNEMONIC2;
+const mnemonicpaydece = process.env.MNEMONICPAYDECE;
 const infuraKey = process.env.INFURA_API_KEY;
 
 module.exports = {
