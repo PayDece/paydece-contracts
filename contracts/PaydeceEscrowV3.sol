@@ -32,12 +32,15 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     enum EscrowStatus {
-        Unknown,
-        Funded,
-        NOT_USED,
-        Completed,
-        Refund,
-        Arbitration
+        Unknown, //0
+        ACTIVE, // 1,
+        CRYPTOS_IN_CUSTODY, // 2,
+        FIATCOIN_TRANSFERED, // 3,
+        COMPLETED, // 4,
+        DELETED, // 5,
+        APPEALED, // 6,
+        REFUND, // 7,
+        RELEASE // 8
     }
 
     struct Escrow {
@@ -119,7 +122,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             feeTaker,
             feeMaker,
             _currency,
-            EscrowStatus.Funded
+            EscrowStatus.CRYPTOS_IN_CUSTODY
         );
 
         emit EscrowDeposit(_orderId, escrows[_orderId]);
@@ -151,7 +154,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             feeTaker,
             feeMaker,
             IERC20(address(0)),
-            EscrowStatus.Funded
+            EscrowStatus.CRYPTOS_IN_CUSTODY
         );
 
         emit EscrowDeposit(_orderId, escrows[_orderId]);
@@ -272,7 +275,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     // ================== Begin Private functions ==================
     function _releaseEscrow(uint _orderId) private nonReentrant {
         require(
-            escrows[_orderId].status == EscrowStatus.Funded,
+            escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "USDT has not been deposited"
         );
 
@@ -292,7 +295,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             _amountFeeTaker;
 
         // write as complete, in case transfer fails
-        escrows[_orderId].status = EscrowStatus.Completed;
+        escrows[_orderId].status = EscrowStatus.COMPLETED;
 
         //Transfer to taker Price Asset - FeeTaker
         escrows[_orderId].currency.safeTransfer(
@@ -306,7 +309,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     function _releaseEscrowNativeCoin(uint _orderId) private nonReentrant {
         require(
-            escrows[_orderId].status == EscrowStatus.Funded,
+            escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "USDT has not been deposited"
         );
 
@@ -324,7 +327,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         feesAvailableNativeCoin += _amountFeeMaker + _amountFeeTaker;
 
         // write as complete, in case transfer fails
-        escrows[_orderId].status = EscrowStatus.Completed;
+        escrows[_orderId].status = EscrowStatus.COMPLETED;
 
         //Transfer to taker Price Asset - FeeTaker
         (bool sent, ) = escrows[_orderId].taker.call{
