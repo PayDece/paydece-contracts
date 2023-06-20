@@ -1,9 +1,12 @@
 // scripts/deploy.js
-async function main () {  
-  const accounts = await ethers.getSigners()
-  console.log(await accounts[0].address)
-  
-  const MyContract = await hre.ethers.getContractFactory("PaydeceEscrow",accounts[0]);
+async function main() {
+  const accounts = await ethers.getSigners();
+  console.log(await accounts[3].address);
+
+  const MyContract = await hre.ethers.getContractFactory(
+    "PaydeceEscrow",
+    accounts[3]
+  );
 
   //const my_contract = await MyContract.deploy("0xbe6FDB4Bcb82Ed31914F04Fa7ac2833d5ab0228E");
   const my_contract = await MyContract.deploy();
@@ -11,7 +14,6 @@ async function main () {
   await my_contract.deployed();
 
   console.log("PaydeceEscrow deployed to:", my_contract.address);
-
 
   // const CriptoCarsEscrow = await ethers.getContractFactory('PaydeceEscrow');
   // console.log('Deploying PaydeceEscrow...');
@@ -24,7 +26,7 @@ async function main () {
 
 main()
   .then(() => process.exit(0))
-  .catch(error => {
+  .catch((error) => {
     console.error(error);
     process.exit(1);
   });

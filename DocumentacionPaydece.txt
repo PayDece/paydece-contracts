@@ -5,7 +5,7 @@ Paso para deploy
 2) npx hardhat verify --contract "contracts/PaydeceEscrow.sol:PaydeceEscrow"  --network polygontest 0x84E49a18956a96f3d3Ff8A923A783C39a8c01774 "0x605F3453C158ad76238f88152430ADC4328b07B4"
 3) npx hardhat verify --contract "contracts/USDTToken.sol:USDTToken"  --network polygon 0x605F3453C158ad76238f88152430ADC4328b07B4
 
-npx hardhat verify --contract "contracts/PaydeceEscrowV3sol:PaydeceEscrow"  --network bsctestnet 0x96Ea9780ed771E21e171d2f7aBC5206041EBb467
+npx hardhat verify --contract "contracts/PaydeceEscrowV3sol:PaydeceEscrow"  --network bsctestnet 0xdC144c5C73B9a180Cbb8E3523b4aaCDa164dE78D
 
 npx hardhat verify --contract "contracts/USDTToken.sol:USDTToken"  --network bsctestnet 0x96Ea9780ed771E21e171d2f7aBC5206041EBb467
 

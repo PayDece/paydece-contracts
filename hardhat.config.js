@@ -9,6 +9,7 @@ require("solidity-coverage");
 const mnemonic = process.env.MNEMONIC;
 const mnemonic2 = process.env.MNEMONIC2;
 const mnemonicpaydece = process.env.MNEMONICPAYDECE;
+const mnemonic_mac1 = process.env.MNEMONIC_MAC1;
 const infuraKey = process.env.INFURA_API_KEY;
 
 module.exports = {
@@ -33,7 +34,7 @@ module.exports = {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       chainId: 97,
       gasPrice: 20000000000,
-      accounts: [mnemonic, mnemonic2, mnemonicpaydece],
+      accounts: [mnemonic, mnemonic2, mnemonicpaydece, mnemonic_mac1],
     },
     bscmainnet: {
       url: "https://bsc-dataseed.binance.org/",
