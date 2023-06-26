@@ -25,6 +25,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowDisputeResolved(uint indexed orderId);
     event EscrowCancelMaker(uint indexed orderId, Escrow escrow);
     event EscrowCancelTaker(uint indexed orderId, Escrow escrow);
+    event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
 
     // Maker defined as who buys usdt
     modifier onlyMaker(uint _orderId) {
@@ -284,7 +285,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         whitelistedStablesAddresses[_addressStableToWhitelist] = false;
     }
 
-    function CancelMaker(uint256 _orderId) public onlyMaker(_orderId){
+    function CancelMaker(uint256 _orderId) public nonReentrant onlyMaker(_orderId){
         // Valida el estado de la Escrow
         require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
 
@@ -306,7 +307,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelMaker(_orderId, escrows[_orderId]);
     }
 
-    function CancelTaker(uint256 _orderId) public onlyTaker(_orderId){
+    function CancelTaker(uint256 _orderId) public nonReentrant onlyTaker(_orderId){
         // Valida el estado de la Escrow
         require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
 
@@ -323,13 +324,23 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelTaker(_orderId, escrows[_orderId]);
     }
 
+    function setMarkAsPaid(uint256 _orderId) public onlyOwner() onlyTaker(_orderId){
+        // Valida el estado de la Escrow
+        require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
+
+        escrows[_orderId].status = EscrowStatus.FIATCOIN_TRANSFERED;
+
+        // emite evento
+        emit EscrowMarkAsPaid(_orderId, escrows[_orderId]);
+    }
+
     /// ================== End Public functions ==================
 
     // ================== Begin Private functions ==================
     function _releaseEscrow(uint _orderId) private nonReentrant {
         require(
-            escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
-            "USDT has not been deposited"
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
+            "El estado tiene que estar en FIATCOIN_TRANSFERED"
         );
 
         uint8 _decimals = escrows[_orderId].currency.decimals();
