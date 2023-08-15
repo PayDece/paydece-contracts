@@ -24,8 +24,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowComplete(uint indexed orderId, Escrow escrow);
     event EscrowDisputeResolved(uint indexed orderId);
     event EscrowCancelMaker(uint indexed orderId, Escrow escrow);
+    event EscrowCancelMakerOwner(uint indexed orderId, Escrow escrow);
     event EscrowCancelTaker(uint indexed orderId, Escrow escrow);
+    event EscrowCancelTakerOwner(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
+    event EscrowMarkAsPaidOwner(uint indexed orderId, Escrow escrow);
 
     // Maker defined as who buys usdt
     modifier onlyMaker(uint _orderId) {
@@ -43,6 +46,15 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
         _;
     }
+
+    // modifier onlyTakerOrOwner(uint _orderId) {
+    //     require(
+    //         msg.sender == escrows[_orderId].taker || owner() == _msgSender() ,
+    //         "Only Taker can call this"
+    //     );
+    //     // require(owner() == _msgSender(), "Ownable: caller is not the owner");
+    //     _;
+    // }
 
     enum EscrowStatus {
         Unknown, //0
@@ -273,6 +285,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     // ================== End External functions that are pure ==================
 
     /// ================== Begin Public functions ==================
+    function getState(uint _orderId) public view returns (EscrowStatus) {
+        Escrow memory _escrow = escrows[_orderId];
+        return _escrow.status;
+    }
+    
     function addStablesAddresses(
         address _addressStableToWhitelist
     ) public onlyOwner {
@@ -307,6 +324,28 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelMaker(_orderId, escrows[_orderId]);
     }
 
+    function CancelMakerOwner(uint256 _orderId) public nonReentrant onlyOwner{
+        // Valida el estado de la Escrow
+        require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
+
+        uint256 _timeDiff = block.timestamp - escrows[_orderId].created;
+
+        // validacióm de tiempo de proceso
+        require(_timeDiff > timeProcess, "El tiempo todavia llego a su termino" );
+
+        // cambio de estado
+        escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
+
+        //Transfer to maker
+        escrows[_orderId].currency.safeTransfer(
+            escrows[_orderId].maker,
+            escrows[_orderId].value
+        );
+
+        // emite evento
+        emit EscrowCancelMakerOwner(_orderId, escrows[_orderId]);
+    }
+
     function CancelTaker(uint256 _orderId) public nonReentrant onlyTaker(_orderId){
         // Valida el estado de la Escrow
         require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
@@ -324,7 +363,24 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelTaker(_orderId, escrows[_orderId]);
     }
 
-    function setMarkAsPaid(uint256 _orderId) public onlyOwner() onlyTaker(_orderId){
+    function CancelTakerOwner(uint256 _orderId) public nonReentrant onlyOwner(){
+        // Valida el estado de la Escrow
+        require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
+
+        // cambio de estado
+        escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
+
+        //Transfer to maker
+        escrows[_orderId].currency.safeTransfer(
+            escrows[_orderId].maker,
+            escrows[_orderId].value
+        );
+
+        // emite evento
+        emit EscrowCancelTakerOwner(_orderId, escrows[_orderId]);
+    }
+
+    function setMarkAsPaid(uint256 _orderId) public onlyTaker(_orderId){
         // Valida el estado de la Escrow
         require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
 
@@ -332,6 +388,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         // emite evento
         emit EscrowMarkAsPaid(_orderId, escrows[_orderId]);
+    }
+
+    function setMarkAsPaidOwner(uint256 _orderId) public onlyOwner(){
+        // Valida el estado de la Escrow
+        require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "El estado tiene que ser CRYPTOS_IN_CUSTODY" );
+
+        escrows[_orderId].status = EscrowStatus.FIATCOIN_TRANSFERED;
+
+        // emite evento
+        emit EscrowMarkAsPaidOwner(_orderId, escrows[_orderId]);
     }
 
     /// ================== End Public functions ==================

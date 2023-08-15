@@ -20,7 +20,8 @@ module.exports = {
   networks: {
     ethereum: {
       url: `https://mainnet.infura.io/v3/${infuraKey}`,
-      accounts: [mnemonic, mnemonic2, mnemonicpaydece],
+      gasPrice: 21000000000,
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
@@ -28,7 +29,7 @@ module.exports = {
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${infuraKey}`,
-      accounts: [mnemonic],
+      accounts: [mnemonic, mnemonic2, mnemonicpaydece, mnemonic_mac1],
     },
     bsctestnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
@@ -40,25 +41,31 @@ module.exports = {
       url: "https://bsc-dataseed.binance.org/",
       chainId: 56,
       gasPrice: 20000000000,
-      accounts: [mnemonic, mnemonic2, mnemonicpaydece],
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
+    },
+    rskmainnet: {
+      url: "https://public-node.rsk.co",
+      chainId: 30,
+      gasPrice: 20000000000,
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
     rsktestnet: {
       url: "https://public-node.testnet.rsk.co",
       chainId: 31,
       gasPrice: 20000000000,
-      accounts: [mnemonic, mnemonic2],
+      accounts: [mnemonic, mnemonic2, mnemonicpaydece, mnemonic_mac1],
     },
     polygontest: {
       url: "https://rpc-mumbai.maticvigil.com/",
       chainId: 80001,
       gasPrice: 20000000000,
-      accounts: [mnemonic, mnemonic2],
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
     polygonmain: {
       url: "https://polygon-rpc.com/",
       chainId: 137,
-      gasPrice: 20000000000,
-      accounts: [mnemonic, mnemonic2, mnemonicpaydece],
+      gasPrice: 70000000000,
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
     ganache: {
       url: "http://127.0.0.1:7545",
@@ -73,7 +80,7 @@ module.exports = {
     // Obtain one at https://bscscan.com/
     apiKey: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K", //BSC Binance
     //apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH Rinkeby
-    //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC" //Pplygon
+    //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
   },
   solidity: "0.8.7",
 };
