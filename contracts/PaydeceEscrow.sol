@@ -73,6 +73,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     struct Escrow {
         address payable maker; //Comprador
         address payable taker; //Vendedor
+        bool maker_premium;
+        bool taker_premium;
         uint256 value; //Monto compra
         uint256 takerfee; //Comision vendedor
         uint256 makerfee; //Comision comprador
@@ -118,7 +120,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint _orderId,
         address payable _taker,
         uint256 _value,
-        IERC20 _currency
+        IERC20 _currency,
+        bool _maker_premium,
+        bool _taker_premium
     ) external virtual {
         require(
             escrows[_orderId].status == EscrowStatus.Unknown,
@@ -154,6 +158,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId] = Escrow(
             payable(msg.sender),
             _taker,
+            _maker_premium,
+            _taker_premium,
             _value,
             feeTaker,
             feeMaker,
@@ -168,7 +174,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     function createEscrowNativeCoin(
         uint _orderId,
         address payable _taker,
-        uint256 _value
+        uint256 _value,        
+        bool _maker_premium,
+        bool _taker_premium
     ) external payable virtual {
         require(
             escrows[_orderId].status == EscrowStatus.Unknown,
@@ -187,6 +195,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId] = Escrow(
             payable(msg.sender),
             _taker,
+            _maker_premium,
+            _taker_premium,
             _value,
             feeTaker,
             feeMaker,
@@ -279,7 +289,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     // ================== Begin External functions that are pure ==================
     function version() external pure virtual returns (string memory) {
-        return "4.0.0";
+        return "4.1.0";
     }
 
     // ================== End External functions that are pure ==================
@@ -419,6 +429,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             (escrows[_orderId].takerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
+        // Validaciones Premium
+        if(escrows[_orderId].maker_premium){
+            _amountFeeMaker = escrows[_orderId].value;
+        }
+        if(escrows[_orderId].taker_premium){
+            _amountFeeTaker = escrows[_orderId].value;
+        }
+
         //feesAvailable += _amountFeeMaker + _amountFeeTaker;
         feesAvailable[escrows[_orderId].currency] +=
             _amountFeeMaker +
@@ -452,6 +470,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 _amountFeeTaker = ((escrows[_orderId].value *
             (escrows[_orderId].takerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
+
+        // Validaciones Premium
+        if(escrows[_orderId].maker_premium){
+            _amountFeeMaker = escrows[_orderId].value;
+        }
+        if(escrows[_orderId].taker_premium){
+            _amountFeeTaker = escrows[_orderId].value;
+        }
 
         //Registra los fees obtenidos para Paydece
         feesAvailableNativeCoin += _amountFeeMaker + _amountFeeTaker;

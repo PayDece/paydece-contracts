@@ -78,9 +78,9 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
-    apiKey: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K", //BSC Binance
+    //apiKey: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K", //BSC Binance
     //apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH Rinkeby
-    //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
+    apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
   },
   solidity: "0.8.7",
 };

@@ -1,5 +1,5 @@
 async function main() {
-  const address = "0xd509FBf7f5162ef35491b0344f322cb765505E29"; //Address Escrow
+  const address = "0x75b25632Ac5F79edEBeCB5abd3E3DAC746a7b848"; //Address Escrow
 
   const accounts = await ethers.getSigners();
 
@@ -13,11 +13,11 @@ async function main() {
 
   // BSC TESTNET
   await escrow.addStablesAddresses(
-    "0xbe6fdb4bcb82ed31914f04fa7ac2833d5ab0228e"
+    "0xdA447c3652AE842d8B322F019AD371f1f19a05Ea"
   );
 
   await escrow.addStablesAddresses(
-    "0x960d266feab590a88e9d2de0198e00fdaade033b"
+    "0x8d6e6dB1242A6227445aFcc0b5Cc64639a0d5402"
   );
 
   //MUMBAY POLYGON
