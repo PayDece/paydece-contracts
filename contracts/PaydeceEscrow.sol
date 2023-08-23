@@ -109,8 +109,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     
     function setTimeProcess(uint256 _timeProcess) external onlyOwner {
         require(
-            timeProcess >= 0 ,
-            "The timeProcess can be >= 0"
+            _timeProcess > 0 ,
+            "The timeProcess can be 0"
         );
         timeProcess = _timeProcess;
     }
@@ -140,6 +140,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         //Obtiene el monto a transferir desde el comprador al contrato
         uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
+
+        if(_maker_premium){
+            _amountFeeMaker = 0;
+        }    
 
         //Valida el Allowance
         uint256 _allowance = _currency.allowance(msg.sender, address(this));
@@ -189,6 +193,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         //Obtiene el monto a transferir desde el comprador al contrato
         uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
+
+        if(_maker_premium){
+            _amountFeeMaker = 0;
+        }    
 
         require((_value + _amountFeeMaker) <= msg.value, "Incorrect amount");
 
@@ -431,10 +439,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         // Validaciones Premium
         if(escrows[_orderId].maker_premium){
-            _amountFeeMaker = escrows[_orderId].value;
+            _amountFeeMaker = 0;
         }
         if(escrows[_orderId].taker_premium){
-            _amountFeeTaker = escrows[_orderId].value;
+            _amountFeeTaker = 0;
         }
 
         //feesAvailable += _amountFeeMaker + _amountFeeTaker;
@@ -473,10 +481,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         // Validaciones Premium
         if(escrows[_orderId].maker_premium){
-            _amountFeeMaker = escrows[_orderId].value;
+            _amountFeeMaker = 0;
         }
         if(escrows[_orderId].taker_premium){
-            _amountFeeTaker = escrows[_orderId].value;
+            _amountFeeTaker = 0;
         }
 
         //Registra los fees obtenidos para Paydece
