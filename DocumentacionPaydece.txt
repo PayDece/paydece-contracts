@@ -5,9 +5,13 @@ Paso para deploy
 2) npx hardhat verify --contract "contracts/PaydeceEscrow.sol:PaydeceEscrow"  --network polygontest 0x84E49a18956a96f3d3Ff8A923A783C39a8c01774 "0x605F3453C158ad76238f88152430ADC4328b07B4"
 3) npx hardhat verify --contract "contracts/USDTToken.sol:USDTToken"  --network polygon 0x605F3453C158ad76238f88152430ADC4328b07B4
 
-npx hardhat verify --contract "contracts/PaydeceEscrow.sol:PaydeceEscrow"  --network polygontest 0x75b25632Ac5F79edEBeCB5abd3E3DAC746a7b848
+npx hardhat verify --contract "contracts/PaydeceEscrow.sol:PaydeceEscrow"  --network polygontest 0x79DE2b3Dc06021A26ef79783F7bCb92Fb5C48B8D
 
 npx hardhat verify --contract "contracts/USDTToken.sol:USDTToken"  --network polygontest 0x75b25632Ac5F79edEBeCB5abd3E3DAC746a7b848
+
+deploy addStablesAddresses
+==========================
+npx hardhat run --network polygontest ./scripts/Paydece/deploy_add_stables.js   
 
 TESTING
 npx hardhat coverage

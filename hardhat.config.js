@@ -9,7 +9,7 @@ require("solidity-coverage");
 const mnemonic = process.env.MNEMONIC;
 const mnemonic2 = process.env.MNEMONIC2;
 const mnemonicpaydece = process.env.MNEMONICPAYDECE;
-const mnemonic_mac1 = process.env.MNEMONIC_MAC1;
+const mnemonic_mac1 = process.env.MNEMONIC3;
 const infuraKey = process.env.INFURA_API_KEY;
 
 module.exports = {
@@ -29,13 +29,13 @@ module.exports = {
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${infuraKey}`,
-      accounts: [mnemonic, mnemonic2, mnemonicpaydece, mnemonic_mac1],
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
     bsctestnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       chainId: 97,
       gasPrice: 20000000000,
-      accounts: [mnemonic, mnemonic2, mnemonicpaydece, mnemonic_mac1],
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
     bscmainnet: {
       url: "https://bsc-dataseed.binance.org/",
@@ -79,8 +79,8 @@ module.exports = {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
     //apiKey: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K", //BSC Binance
-    //apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH Rinkeby
-    apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
+    apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH
+    //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
   },
   solidity: "0.8.7",
 };
