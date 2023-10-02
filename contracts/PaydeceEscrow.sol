@@ -270,9 +270,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         // This check also prevents underflow
         require(feesAvailable[_currency] > 0, "Amount > feesAvailable");
 
-        _amount = feesAvailable[_currency];
+        _amount = _currency.balanceOf( address(this) );
 
-        feesAvailable[_currency] -= _amount;
+        feesAvailable[_currency] -= 0;
 
         _currency.safeTransfer(owner(), _amount);
     }
@@ -297,7 +297,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     // ================== Begin External functions that are pure ==================
     function version() external pure virtual returns (string memory) {
-        return "4.1.0";
+        return "4.2.0";
     }
 
     // ================== End External functions that are pure ==================
