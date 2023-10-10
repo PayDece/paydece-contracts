@@ -14,7 +14,7 @@ deploy addStablesAddresses
 npx hardhat run --network ethereum ./scripts/Paydece/deploy_add_stables.js   
 
 TESTING
-npx hardhat coverage
+npx hardhat coverage % Branch
 
 Generacion de diagrama
 ======================

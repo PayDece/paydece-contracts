@@ -26,6 +26,14 @@ describe("setFeeMaker", () => {
     await expect(
       paydeceEscrow.connect(other).setFeeTaker("1000")
     ).to.be.revertedWith("caller is not the owner");
+
+    await expect(paydeceEscrow.setFeeTaker("100000")).to.be.revertedWith(
+      "The fee can be from 0% to 1%"
+    );
+
+    await expect(paydeceEscrow.setFeeTaker("100000")).to.be.revertedWith(
+      "The fee can be from 0% to 1%"
+    );
   });
 
   it("should revert with message 'The fee can be from 0% to 1%", async () => {
@@ -36,6 +44,10 @@ describe("setFeeMaker", () => {
     await paydeceEscrow.deployed();
 
     await expect(paydeceEscrow.setFeeMaker(1001)).to.be.revertedWith(
+      "The fee can be from 0% to 1%"
+    );
+
+    await expect(paydeceEscrow.setFeeTaker(1001)).to.be.revertedWith(
       "The fee can be from 0% to 1%"
     );
   });
@@ -106,6 +118,10 @@ describe("addStablesAddresses & delStablesAddresses", () => {
     await paydeceEscrow.delStablesAddresses(usdcAddress);
 
     //delStablesAddresses Error
+    await expect(
+      paydeceEscrow.connect(other).addStablesAddresses(usdcAddress)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+
     await expect(
       paydeceEscrow.connect(other).delStablesAddresses(usdcAddress)
     ).to.be.revertedWith("Ownable: caller is not the owner");
@@ -180,6 +196,10 @@ describe("PaydeceEscrow StableCoin", function () {
     await paydeceEscrow
       .connect(Buyer)
       .createEscrow("1", Seller.address, ammount, usdt.address, true, true);
+
+    await expect(
+      paydeceEscrow.connect(Buyer).releaseEscrow("1")
+    ).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED");
 
     await expect(
       paydeceEscrow
@@ -394,7 +414,6 @@ describe("PaydeceEscrow StableCoin", function () {
 
     //transfer
     await usdt.transfer(Buyer.address, ammount);
-
     //call approve
     await usdt.connect(Buyer).approve(paydeceEscrow.address, ammount);
 
@@ -517,8 +536,15 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow.connect(other).releaseEscrow("1")
     ).to.be.revertedWith("Only Maker can call this");
 
-    //call setMarkAsPaid
+    await expect(
+      paydeceEscrow.connect(other).CancelTaker("1")
+    ).to.be.revertedWith("Only Taker can call this");
+
     await paydeceEscrow.connect(Seller).CancelTaker("1");
+
+    await expect(
+      paydeceEscrow.connect(Seller).CancelTaker("1")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
@@ -616,6 +642,10 @@ describe("PaydeceEscrow StableCoin", function () {
     //call setMarkAsPaid
     await paydeceEscrow.connect(owner).CancelMakerOwner("1");
 
+    await expect(
+      paydeceEscrow.connect(owner).CancelMakerOwner("1")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
+
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     //console.log("scBalance:" + scBalance);
@@ -709,8 +739,20 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow.connect(other).releaseEscrow("1")
     ).to.be.revertedWith("Only Maker can call this");
 
-    //call setMarkAsPaid
+    await paydeceEscrow.connect(owner).setTimeProcess(5000);
+
+    //await paydeceEscrow.connect(Buyer).CancelMaker("1");
+    await expect(
+      paydeceEscrow.connect(Buyer).CancelMaker("1")
+    ).to.be.revertedWith("Time is still running out.");
+
+    await paydeceEscrow.connect(owner).setTimeProcess(1);
+
     await paydeceEscrow.connect(Buyer).CancelMaker("1");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).CancelMaker("1")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
@@ -812,6 +854,10 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
 
     //call releaseEscrow
     await paydeceEscrow.connect(Buyer).releaseEscrow("1");
+
+    await expect(
+      paydeceEscrow.connect(owner).setMarkAsPaidOwner("1")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
@@ -1127,6 +1173,10 @@ describe("PaydeceEscrow StableCoin CancelTakerOwner", function () {
     //call setMarkAsPaid
     await paydeceEscrow.connect(owner).CancelTakerOwner("1");
 
+    await expect(
+      paydeceEscrow.connect(owner).CancelTakerOwner("1")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
+
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     //console.log("scBalance:" + scBalance);
@@ -1221,6 +1271,10 @@ describe("PaydeceEscrow StableCoin CancelTakerOwner", function () {
 
     //call releaseEscrowOwner
     await paydeceEscrow.connect(owner).releaseEscrowOwner("1");
+
+    await expect(
+      paydeceEscrow.connect(Seller).setMarkAsPaid("1")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
@@ -1428,6 +1482,10 @@ describe("PaydeceEscrow NativeCoin", function () {
 
     //call releaseEscrow
     await paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2")
+    ).to.be.revertedWith("USDT has not been deposited");
 
     //get balance SC paydece
     const afterbalanceSC = await ethers.provider.getBalance(
