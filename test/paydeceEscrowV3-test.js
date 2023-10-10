@@ -377,10 +377,12 @@ describe("PaydeceEscrow StableCoin", function () {
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     // console.log("==========scBalance:" + scBalance);
-    expect(Number(scBalance)).to.equal(Number(1000000));
+    expect(Number(scBalance)).to.equal(Number(0));
     const buyerBalance = await usdt.balanceOf(Buyer.address);
     // console.log("==========buyerBalance:" + buyerBalance);
-    expect(Number(buyerBalance)).to.equal(Number(100 * 10 ** decimals));
+    expect(Number(buyerBalance)).to.equal(
+      Number(100 * 10 ** decimals) + 1000000
+    );
     const sellerBalance = await usdt.balanceOf(Seller.address);
     // console.log("==========sellerBalance:" + sellerBalance);
     expect(Number(sellerBalance)).to.equal(Number(0));
@@ -544,106 +546,6 @@ describe("PaydeceEscrow StableCoin", function () {
 
     await expect(
       paydeceEscrow.connect(Seller).CancelTaker("1")
-    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
-
-    //get Balance
-    const scBalance = await usdt.balanceOf(paydeceEscrow.address);
-    //console.log("scBalance:" + scBalance);
-    expect(Number(scBalance)).to.equal(Number(0));
-
-    const buyerBalance = await usdt.balanceOf(Buyer.address);
-    //console.log("buyerBalance:" + buyerBalance);
-    expect(Number(buyerBalance)).to.equal(Number(100 * 10 ** decimals));
-
-    const sellerBalance = await usdt.balanceOf(Seller.address);
-    //console.log("sellerBalance:" + sellerBalance);
-    expect(Number(sellerBalance)).to.equal(Number(0));
-  });
-
-  //CancelMakerOwner
-  it("should create a escrow and CancelMakerOwner", async function () {
-    let PaydeceEscrow, paydeceEscrow;
-    let USDT, usdt;
-
-    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
-    await paydeceEscrow.deployed();
-
-    // Deploy USDT
-    USDT = await ethers.getContractFactory("USDTToken");
-    usdt = await USDT.deploy();
-    await usdt.deployed();
-
-    const [owner, Seller, Buyer, other] = await ethers.getSigners();
-
-    //Set Fee to 1%
-    await paydeceEscrow.connect(owner).setFeeMaker("1000");
-    await paydeceEscrow.connect(owner).setFeeTaker("1000");
-
-    //Set amount
-    const decimals = await usdt.connect(Buyer).decimals();
-    const ammount = 100 * 10 ** decimals;
-
-    const _amountFeeTaker =
-      (ammount * (1000 * 10 ** decimals)) / (100 * 10 ** decimals) / 1000;
-    const _amountFeeMaker =
-      (ammount * (1000 * 10 ** decimals)) / (100 * 10 ** decimals) / 1000;
-
-    await expect(
-      paydeceEscrow
-        .connect(Seller)
-        .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("Address Stable to be whitelisted");
-
-    //call addStablesAddresses
-    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
-
-    //transfer
-    await usdt.transfer(Buyer.address, ammount);
-
-    await expect(
-      paydeceEscrow
-        .connect(Buyer)
-        .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("Taker approve to Escrow first");
-
-    //call approve
-    await usdt
-      .connect(Buyer)
-      .approve(paydeceEscrow.address, ammount + _amountFeeTaker);
-
-    await expect(
-      paydeceEscrow
-        .connect(Seller)
-        .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("taker cannot be the same as maker");
-
-    //call approve
-    await usdt
-      .connect(Buyer)
-      .approve(paydeceEscrow.address, ammount + _amountFeeTaker);
-
-    //call createEscrow
-    await paydeceEscrow
-      .connect(Buyer)
-      .createEscrow("1", Seller.address, ammount, usdt.address, true, true);
-
-    await expect(
-      paydeceEscrow
-        .connect(Buyer)
-        .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("Escrow already exists");
-
-    //call releaseEscrow Error
-    await expect(
-      paydeceEscrow.connect(other).releaseEscrow("1")
-    ).to.be.revertedWith("Only Maker can call this");
-
-    //call setMarkAsPaid
-    await paydeceEscrow.connect(owner).CancelMakerOwner("1");
-
-    await expect(
-      paydeceEscrow.connect(owner).CancelMakerOwner("1")
     ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get Balance
@@ -1018,10 +920,12 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     // console.log("==========scBalance:" + scBalance);
-    expect(Number(scBalance)).to.equal(Number(1000000));
+    expect(Number(scBalance)).to.equal(Number(0));
     const buyerBalance = await usdt.balanceOf(Buyer.address);
     // console.log("==========buyerBalance:" + buyerBalance);
-    expect(Number(buyerBalance)).to.equal(Number(100 * 10 ** decimals));
+    expect(Number(buyerBalance)).to.equal(
+      Number(100 * 10 ** decimals) + 1000000
+    );
     const sellerBalance = await usdt.balanceOf(Seller.address);
     // console.log("==========sellerBalance:" + sellerBalance);
     expect(Number(sellerBalance)).to.equal(Number(0));
@@ -1101,96 +1005,7 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
 });
 
 //CancelTakerOwner
-describe("PaydeceEscrow StableCoin CancelTakerOwner", function () {
-  //StableCoin
-  it("should create a escrow and release StableCoin", async function () {
-    let PaydeceEscrow, paydeceEscrow;
-    let USDT, usdt;
-
-    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
-    await paydeceEscrow.deployed();
-
-    // Deploy USDT
-    USDT = await ethers.getContractFactory("USDTToken");
-    usdt = await USDT.deploy();
-    await usdt.deployed();
-
-    const [owner, Seller, Buyer, other] = await ethers.getSigners();
-
-    //Set Fee to 1%
-    await paydeceEscrow.connect(owner).setFeeMaker("1000");
-    await paydeceEscrow.connect(owner).setFeeTaker("1000");
-
-    //Set amount
-    const decimals = await usdt.connect(Buyer).decimals();
-    const ammount = 100 * 10 ** decimals;
-
-    const _amountFeeTaker =
-      (ammount * (1000 * 10 ** decimals)) / (100 * 10 ** decimals) / 1000;
-    const _amountFeeMaker =
-      (ammount * (1000 * 10 ** decimals)) / (100 * 10 ** decimals) / 1000;
-
-    await expect(
-      paydeceEscrow
-        .connect(Seller)
-        .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("Address Stable to be whitelisted");
-
-    //call addStablesAddresses
-    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
-
-    //transfer
-    await usdt.transfer(Buyer.address, ammount);
-
-    await expect(
-      paydeceEscrow
-        .connect(Buyer)
-        .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("Taker approve to Escrow first");
-
-    //call approve
-    await usdt
-      .connect(Buyer)
-      .approve(paydeceEscrow.address, ammount + _amountFeeTaker);
-
-    await expect(
-      paydeceEscrow
-        .connect(Seller)
-        .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("taker cannot be the same as maker");
-
-    //call approve
-    await usdt
-      .connect(Buyer)
-      .approve(paydeceEscrow.address, ammount + _amountFeeTaker);
-
-    //call createEscrow
-    await paydeceEscrow
-      .connect(Buyer)
-      .createEscrow("1", Seller.address, ammount, usdt.address, true, true);
-
-    //call setMarkAsPaid
-    await paydeceEscrow.connect(owner).CancelTakerOwner("1");
-
-    await expect(
-      paydeceEscrow.connect(owner).CancelTakerOwner("1")
-    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
-
-    //get Balance
-    const scBalance = await usdt.balanceOf(paydeceEscrow.address);
-    //console.log("scBalance:" + scBalance);
-    expect(Number(scBalance)).to.equal(Number(0));
-
-    const buyerBalance = await usdt.balanceOf(Buyer.address);
-    //console.log("buyerBalance:" + buyerBalance);
-    expect(Number(buyerBalance)).to.equal(Number(100 * 10 ** decimals));
-
-    const sellerBalance = await usdt.balanceOf(Seller.address);
-    //console.log("sellerBalance:" + sellerBalance);
-    expect(Number(sellerBalance)).to.equal(Number(0));
-  });
-
+describe("PaydeceEscrow StableCoin releaseEscrowOwner", function () {
   it("should releaseEscrowOwner to Seller StableCoin", async function () {
     let PaydeceEscrow, paydeceEscrow;
     let USDT, usdt;
@@ -1340,10 +1155,12 @@ describe("PaydeceEscrow StableCoin CancelTakerOwner", function () {
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     // console.log("==========scBalance:" + scBalance);
-    expect(Number(scBalance)).to.equal(Number(1000000));
+    expect(Number(scBalance)).to.equal(Number(0));
     const buyerBalance = await usdt.balanceOf(Buyer.address);
     // console.log("==========buyerBalance:" + buyerBalance);
-    expect(Number(buyerBalance)).to.equal(Number(100 * 10 ** decimals));
+    expect(Number(buyerBalance)).to.equal(
+      Number(100 * 10 ** decimals) + 1000000
+    );
     const sellerBalance = await usdt.balanceOf(Seller.address);
     // console.log("==========sellerBalance:" + sellerBalance);
     expect(Number(sellerBalance)).to.equal(Number(0));
