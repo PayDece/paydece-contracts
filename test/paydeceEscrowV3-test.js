@@ -1382,7 +1382,7 @@ describe("PaydeceEscrow NativeCoin", function () {
     // expect(Number(buyerBalance)).to.be.at.least(Number(ethers.utils.parseUnits("100", "ether")));
   });
 
-  it("should refund to Buyer NativeCoin", async function () {
+  it("should refund to refundMakerNativeCoin", async function () {
     let PaydeceEscrow, paydeceEscrow;
     let USDT, usdt;
 
@@ -1426,6 +1426,71 @@ describe("PaydeceEscrow NativeCoin", function () {
 
     //call releaseEscrow
     await paydeceEscrow.connect(owner).refundMakerNativeCoin("2");
+
+    //get balance sc paydece
+    const afterbalanceSC = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+
+    // console.log("----------afterbalanceSC:"+afterbalanceSC.toString())
+    expect(Number(afterbalanceSC)).to.equal(Number(0));
+
+    // sellerBalance = await ethers.provider.getBalance(Seller.address);
+    // console.log("sellerBalance:"+sellerBalance.toString())
+
+    // buyerBalance = await ethers.provider.getBalance(Buyer.address);
+    // console.log("buyerBalance:"+buyerBalance.toString())
+
+    // 1 is expected because 1% of 100
+    // expect(Number(afterbalanceSC)).to.equal(Number(ethers.utils.parseUnits("1", "ether")));
+
+    // expect(Number(buyerBalance)).to.be.at.least(Number(ethers.utils.parseUnits("99", "ether")));
+  });
+
+  it("should refund to CancelMakerNative", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Seller, Buyer, other] = await ethers.getSigners();
+    // console.log(owner.address)
+
+    let sellerBalance = await ethers.provider.getBalance(Seller.address);
+    // console.log("sellerBalance:"+sellerBalance.toString())
+
+    //get balance sc paydece
+    const prevBalanceSC = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+    // console.log(prevBalance.toString())
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeTaker("1000");
+
+    //call createEscrow
+    const ammount = ethers.utils.parseUnits("100", "ether"); //1 ether
+
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrowNativeCoin("2", Seller.address, ammount, false, false, {
+        value: ammount,
+      });
+
+    //call releaseEscrow Error
+    await expect(
+      paydeceEscrow.connect(Seller).CancelMakerNative("2")
+    ).to.be.revertedWith("Only Maker can call this");
+
+    //call releaseEscrow
+    await paydeceEscrow.connect(Buyer).CancelMakerNative("2");
 
     //get balance sc paydece
     const afterbalanceSC = await ethers.provider.getBalance(

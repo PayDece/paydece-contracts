@@ -232,7 +232,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         address _maker = escrows[_orderId].maker;
         IERC20 _currency = escrows[_orderId].currency;
 
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);       
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,false);
 
         _currency.safeTransfer(_maker, _value + _amountFeeMaker);
 
@@ -247,9 +247,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 _value = escrows[_orderId].value;
         address _maker = escrows[_orderId].maker;
 
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,true);
 
         //Transfer call
-        (bool sent, ) = payable(address(_maker)).call{value: _value}("");
+        (bool sent, ) = payable(address(_maker)).call{value: _value + _amountFeeMaker}("");
         require(sent, "Transfer failed.");
 
         emit EscrowDisputeResolved(_orderId);
@@ -324,12 +325,36 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
 
         //get Amount Fee Maker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,false );
         //Transfer to maker
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].maker,
             escrows[_orderId].value + _amountFeeMaker
         );
+
+        // emite evento
+        emit EscrowCancelMaker(_orderId, escrows[_orderId]);
+    }
+
+
+    function CancelMakerNative(uint256 _orderId) public nonReentrant onlyMaker(_orderId){
+        // Valida el estado de la Escrow
+        require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "Status must be CRYPTOS_IN_CUSTODY" );
+
+        uint256 _timeDiff = block.timestamp - escrows[_orderId].created;
+
+        // validacióm de tiempo de proceso
+        require(_timeDiff > timeProcess, "Time is still running out." );
+
+        // cambio de estado
+        escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
+
+        //get Amount Fee Maker
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,true);
+        
+        //Transfer call
+        (bool sent, ) = payable(address(escrows[_orderId].maker)).call{value: (escrows[_orderId].value + _amountFeeMaker) }("");
+        require(sent, "Transfer failed.");
 
         // emite evento
         emit EscrowCancelMaker(_orderId, escrows[_orderId]);
@@ -344,7 +369,30 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeTaker
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId);
+        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId,false);
+
+        //update fee amount
+        feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;
+
+        //Transfer to Taker
+        escrows[_orderId].currency.safeTransfer(
+            escrows[_orderId].maker,
+            (escrows[_orderId].value + _amountFeeTaker)
+        );
+
+        // emite evento
+        emit EscrowCancelTaker(_orderId, escrows[_orderId]);
+    }
+
+    function CancelTakerNative(uint256 _orderId) public nonReentrant onlyTaker(_orderId){
+        // Valida el estado de la Escrow
+        require( escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY , "Status must be CRYPTOS_IN_CUSTODY" );
+
+        // cambio de estado
+        escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
+
+        //get amountFeeTaker
+        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId,true);
 
         //update fee amount
         feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;
@@ -389,8 +437,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         //Obtiene el monto a transferir desde el comprador al contrato        //takerfee //makerfee
-        uint256 _amountFeeMaker =  getAmountFeeMaker(_orderId);
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId);        
+        uint256 _amountFeeMaker =  getAmountFeeMaker(_orderId,false);
+        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId,false);        
 
         //feesAvailable += _amountFeeMaker + _amountFeeTaker;
         feesAvailable[escrows[_orderId].currency] +=
@@ -450,9 +498,13 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         
     }
 
-    function getAmountFeeTaker(uint256 _orderId) private view returns (uint256) {
+    function getAmountFeeTaker(uint256 _orderId, bool _native) private view returns (uint256) {
         //get decimal of stable
-        uint8 _decimals = escrows[_orderId].currency.decimals();
+        uint8 _decimals = 18;
+
+        if(!_native){
+            _decimals = escrows[_orderId].currency.decimals();
+        }
 
         //get amountFeeTaker
         uint256 _amountFeeTaker = ((escrows[_orderId].value *
@@ -467,9 +519,13 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         return _amountFeeTaker;
     }
 
-    function getAmountFeeMaker(uint256 _orderId) private view returns (uint256) {
+    function getAmountFeeMaker(uint256 _orderId, bool _native) private view returns (uint256) {
         //get decimal of stable
-        uint8 _decimals = escrows[_orderId].currency.decimals();
+        uint8 _decimals = 18;
+
+        if(!_native){
+            _decimals = escrows[_orderId].currency.decimals();
+        }
 
         //get amountFeeTaker
         uint256 _amountFeeMaker = ((escrows[_orderId].value *
