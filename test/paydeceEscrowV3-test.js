@@ -1512,6 +1512,89 @@ describe("PaydeceEscrow NativeCoin", function () {
     // expect(Number(buyerBalance)).to.be.at.least(Number(ethers.utils.parseUnits("99", "ether")));
   });
 
+  it("should refund to CancelTakerNative", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Maker, Taker, other] = await ethers.getSigners();
+    // console.log(owner.address)
+
+    // let sellerBalance = await ethers.provider.getBalance(Seller.address);
+    // console.log("sellerBalance:"+sellerBalance.toString())
+
+    //get balance sc paydece
+    const prevBalanceSC = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+    // console.log(prevBalance.toString())
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeTaker("1000");
+    await paydeceEscrow.connect(owner).setFeeMaker("1000");
+
+    //call createEscrow
+    const ammount = ethers.utils.parseUnits("100", "ether"); //1 ether
+    const ammount_fee = ethers.utils.parseUnits("100", "ether"); //1 ether
+
+    // console.log(ammount.toString());
+    console.log(ammount_fee.toString());
+
+    const afterbalanceSC1 = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+    // console.log("----------afterbalanceSC1:" + afterbalanceSC1.toString());
+
+    await paydeceEscrow
+      .connect(Maker)
+      .createEscrowNativeCoin("3", Taker.address, ammount, true, true, {
+        value: ammount_fee,
+      });
+
+    // var escrow = await paydeceEscrow.escrows("3");
+    // console.log(escrow);
+
+    const afterbalanceSC2 = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+    // console.log("----------afterbalanceSC2:" + afterbalanceSC2.toString());
+
+    await expect(
+      paydeceEscrow.connect(Maker).CancelTakerNative("3")
+    ).to.be.revertedWith("Only Taker can call this");
+
+    // var escrow = await paydeceEscrow.escrows(2);
+
+    await paydeceEscrow.connect(Taker).CancelTakerNative("3");
+
+    //get balance sc paydece
+    const afterbalanceSC = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+
+    // console.log("----------afterbalanceSC:" + afterbalanceSC.toString());
+    expect(Number(afterbalanceSC)).to.equal(Number(0));
+
+    // sellerBalance = await ethers.provider.getBalance(Seller.address);
+    // console.log("sellerBalance:"+sellerBalance.toString())
+
+    // buyerBalance = await ethers.provider.getBalance(Buyer.address);
+    // console.log("buyerBalance:"+buyerBalance.toString())
+
+    // 1 is expected because 1% of 100
+    // expect(Number(afterbalanceSC)).to.equal(Number(ethers.utils.parseUnits("1", "ether")));
+
+    // expect(Number(buyerBalance)).to.be.at.least(Number(ethers.utils.parseUnits("99", "ether")));
+  });
+
   it("should feesAvailableNativeCoin & withdrawFeesNativeCoin NativeCoin Premium", async function () {
     let PaydeceEscrow, paydeceEscrow;
 

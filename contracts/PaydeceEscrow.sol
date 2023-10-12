@@ -187,7 +187,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             _amountFeeMaker = 0;
         }    
 
-        require((_value + _amountFeeMaker) <= msg.value, "Incorrect amount");
+        require((_value + _amountFeeMaker) == msg.value, "Incorrect amount");
 
         escrows[_orderId] = Escrow(
             payable(msg.sender),
@@ -392,16 +392,22 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeTaker
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId,true);
+        uint256 _amountFeeTaker = getAmountFeeMaker(_orderId,true);
 
         //update fee amount
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;
+        feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;        
 
-        //Transfer to Taker
-        escrows[_orderId].currency.safeTransfer(
-            escrows[_orderId].maker,
-            (escrows[_orderId].value + _amountFeeTaker)
-        );
+        //Transfer to taker Price Asset - FeeTaker
+        // (bool sent, ) = escrows[_orderId].maker.call{
+        //     value: escrows[_orderId].value + _amountFeeTaker
+        // }("");
+        // require(sent, "Transfer failed.");
+
+        escrows[_orderId].maker.transfer(escrows[_orderId].value + _amountFeeTaker);
+        // escrows[_orderId].maker.transfer(address(this).balance);
+       
+        // bool sent = escrows[_orderId].maker.send(_amountFeeTaker);
+        // require(sent, "Failed to send Ether");
 
         // emite evento
         emit EscrowCancelTaker(_orderId, escrows[_orderId]);
@@ -522,21 +528,22 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     function getAmountFeeMaker(uint256 _orderId, bool _native) private view returns (uint256) {
         //get decimal of stable
         uint8 _decimals = 18;
-
-        if(!_native){
+        uint256 _amountFeeMaker =  0;
+        
+        if(_native==false){
             _decimals = escrows[_orderId].currency.decimals();
         }
 
-        //get amountFeeTaker
-        uint256 _amountFeeMaker = ((escrows[_orderId].value *
+        //get amountFeeTaker        
+        _amountFeeMaker = ((escrows[_orderId].value *
             (escrows[_orderId].makerfee * 10 ** _decimals)) /
-            (100 * 10 ** _decimals)) / 1000;
+            (100 * 10 ** _decimals)) / 1000;        
 
         // Validations Premium
         if(escrows[_orderId].taker_premium){
             _amountFeeMaker = 0;
         }
-
+        
         return _amountFeeMaker;
     }
     // ================== End Private functions ==================
