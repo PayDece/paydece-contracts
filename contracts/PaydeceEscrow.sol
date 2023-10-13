@@ -187,6 +187,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             _amountFeeMaker = 0;
         }    
 
+        //Verification was added for the user to send the exact amount of native tokens to escrow.
         require((_value + _amountFeeMaker) == msg.value, "Incorrect amount");
 
         escrows[_orderId] = Escrow(
