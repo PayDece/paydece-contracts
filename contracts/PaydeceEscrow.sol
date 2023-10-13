@@ -226,13 +226,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     /// release funds to the maker - cancelled contract
     function refundMaker(uint _orderId) external nonReentrant onlyOwner {
-        //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
+        require(escrows[_orderId].status != EscrowStatus.REFUND,"Refund not approved");
 
         uint256 _value = escrows[_orderId].value;
         address _maker = escrows[_orderId].maker;
         IERC20 _currency = escrows[_orderId].currency;
 
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,false);
+
+        // write as refun, in case transfer fails
+        escrows[_orderId].status = EscrowStatus.REFUND;
 
         _currency.safeTransfer(_maker, _value + _amountFeeMaker);
 
@@ -242,12 +245,15 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     function refundMakerNativeCoin(
         uint _orderId
     ) external nonReentrant onlyOwner {
-        //require(escrows[_orderId].status == EscrowStatus.Refund,"Refund not approved");
+        require(escrows[_orderId].status != EscrowStatus.REFUND,"Refund not approved");
 
         uint256 _value = escrows[_orderId].value;
         address _maker = escrows[_orderId].maker;
 
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,true);
+
+        // write as refun, in case transfer fails
+        escrows[_orderId].status = EscrowStatus.REFUND;
 
         //Transfer call
         (bool sent, ) = payable(address(_maker)).call{value: _value + _amountFeeMaker}("");

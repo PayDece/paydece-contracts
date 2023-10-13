@@ -374,6 +374,11 @@ describe("PaydeceEscrow StableCoin", function () {
     //call refundBuyer
     await paydeceEscrow.connect(owner).refundMaker("1");
 
+    //call refundBuyer
+    await expect(
+      paydeceEscrow.connect(owner).refundMaker("1")
+    ).to.be.revertedWith("Refund not approved");
+
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     // console.log("==========scBalance:" + scBalance);
@@ -1444,11 +1449,14 @@ describe("PaydeceEscrow NativeCoin", function () {
     //call releaseEscrow
     await paydeceEscrow.connect(owner).refundMakerNativeCoin("2");
 
+    await expect(
+      paydeceEscrow.connect(owner).refundMakerNativeCoin("2")
+    ).to.be.revertedWith("Refund not approved");
+
     //get balance sc paydece
     const afterbalanceSC = await ethers.provider.getBalance(
       paydeceEscrow.address
     );
-
     // console.log("----------afterbalanceSC:"+afterbalanceSC.toString())
     expect(Number(afterbalanceSC)).to.equal(Number(0));
 
