@@ -439,6 +439,20 @@ describe("PaydeceEscrow StableCoin", function () {
         .createEscrow("1", Seller.address, 0, usdt.address, false, false)
     ).to.be.revertedWith("'the parameter value cannot be zero");
 
+    //call createEscrow taker zero
+    await expect(
+      paydeceEscrow
+        .connect(Buyer)
+        .createEscrow(
+          "2",
+          ethers.constants.AddressZero,
+          ammount,
+          usdt.address,
+          false,
+          false
+        )
+    ).to.be.revertedWith("The address taker cannot be empty");
+
     //call createEscrow
     await paydeceEscrow
       .connect(Buyer)
@@ -1287,6 +1301,19 @@ describe("PaydeceEscrow NativeCoin", function () {
         .connect(Buyer)
         .createEscrowNativeCoin("2", Seller.address, 0, false, false)
     ).to.be.revertedWith("the parameter value cannot be zero");
+
+    //call createEscrow taker zero
+    await expect(
+      paydeceEscrow
+        .connect(Buyer)
+        .createEscrowNativeCoin(
+          "2",
+          ethers.constants.AddressZero,
+          0,
+          false,
+          false
+        )
+    ).to.be.revertedWith("The address taker cannot be empty");
 
     //Error the ammount
     await expect(

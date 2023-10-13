@@ -113,6 +113,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         bool _maker_premium,
         bool _taker_premium
     ) external virtual {
+
+        require(_taker != address(0), "The address taker cannot be empty");
+
         require(
             escrows[_orderId].status == EscrowStatus.Unknown,
             "Escrow already exists"
@@ -177,6 +180,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             escrows[_orderId].status == EscrowStatus.Unknown,
             "Escrow already exists"
         );
+        require(_taker != address(0), "The address taker cannot be empty");
 
         require(msg.sender != _taker, "Taker cannot be the same as maker");
 
