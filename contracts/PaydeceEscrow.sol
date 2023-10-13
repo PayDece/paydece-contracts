@@ -467,7 +467,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     function _releaseEscrowNativeCoin(uint _orderId) private nonReentrant {
         require(
             escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
-            "USDT has not been deposited"
+            "Native Coin has not been deposited"
         );
 
         uint8 _decimals = 18; //Wei

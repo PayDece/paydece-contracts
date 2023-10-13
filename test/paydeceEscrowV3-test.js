@@ -1297,12 +1297,18 @@ describe("PaydeceEscrow NativeCoin", function () {
       paydeceEscrow.connect(other).releaseEscrowNativeCoin("2")
     ).to.be.revertedWith("Only Maker can call this");
 
-    //call releaseEscrow
-    await paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2");
-
     await expect(
       paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2")
-    ).to.be.revertedWith("USDT has not been deposited");
+    ).to.be.revertedWith("Native Coin has not been deposited");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).setMarkAsPaid("2")
+    ).to.be.revertedWith("Only Taker can call this");
+
+    await paydeceEscrow.connect(Seller).setMarkAsPaid("2");
+
+    //call releaseEscrow
+    await paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2");
 
     //get balance SC paydece
     const afterbalanceSC = await ethers.provider.getBalance(
@@ -1361,7 +1367,18 @@ describe("PaydeceEscrow NativeCoin", function () {
       paydeceEscrow.connect(other).releaseEscrowOwnerNativeCoin("2")
     ).to.be.revertedWith("Ownable: caller is not the owner");
 
-    //call releaseEscrow
+    //call releaseEscrowOwner
+    await expect(
+      paydeceEscrow.connect(owner).releaseEscrowOwnerNativeCoin("2")
+    ).to.be.revertedWith("Native Coin has not been deposited");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).setMarkAsPaid("2")
+    ).to.be.revertedWith("Only Taker can call this");
+
+    await paydeceEscrow.connect(Seller).setMarkAsPaid("2");
+
+    //call releaseEscrowOwner
     await paydeceEscrow.connect(owner).releaseEscrowOwnerNativeCoin("2");
 
     //get balance sc paydece
@@ -1546,7 +1563,7 @@ describe("PaydeceEscrow NativeCoin", function () {
     const ammount_fee = ethers.utils.parseUnits("100", "ether"); //1 ether
 
     // console.log(ammount.toString());
-    console.log(ammount_fee.toString());
+    // console.log(ammount_fee.toString());
 
     const afterbalanceSC1 = await ethers.provider.getBalance(
       paydeceEscrow.address
@@ -1630,6 +1647,20 @@ describe("PaydeceEscrow NativeCoin", function () {
       });
 
     //call releaseEscrow
+    await expect(
+      paydeceEscrow.connect(Seller).releaseEscrowNativeCoin("2")
+    ).to.be.revertedWith("Only Maker can call this");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2")
+    ).to.be.revertedWith("Native Coin has not been deposited");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).setMarkAsPaid("2")
+    ).to.be.revertedWith("Only Taker can call this");
+
+    await paydeceEscrow.connect(Seller).setMarkAsPaid("2");
+
     await paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2");
 
     //get balance SC paydece
@@ -1716,6 +1747,24 @@ describe("PaydeceEscrow NativeCoin", function () {
       });
 
     //call releaseEscrow
+    await expect(
+      paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2")
+    ).to.be.revertedWith("Native Coin has not been deposited");
+
+    await expect(
+      paydeceEscrow.connect(owner).releaseEscrowNativeCoin("2")
+    ).to.be.revertedWith("Only Maker can call this");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2")
+    ).to.be.revertedWith("Native Coin has not been deposited");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).setMarkAsPaid("2")
+    ).to.be.revertedWith("Only Taker can call this");
+
+    await paydeceEscrow.connect(Seller).setMarkAsPaid("2");
+
     await paydeceEscrow.connect(Buyer).releaseEscrowNativeCoin("2");
 
     //get balance SC paydece
