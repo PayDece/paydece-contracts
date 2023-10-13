@@ -125,6 +125,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         require(msg.sender != _taker, "taker cannot be the same as maker");
 
+        require(_value > 0, "the parameter value cannot be zero");
+
         uint8 _decimals = _currency.decimals();
         //Obtiene el monto a transferir desde el comprador al contrato
         uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
@@ -177,6 +179,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         require(msg.sender != _taker, "Taker cannot be the same as maker");
+
+        require(_value > 0, "the parameter value cannot be zero");
 
         uint8 _decimals = 18;
         //Obtiene el monto a transferir desde el comprador al contrato

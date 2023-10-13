@@ -432,6 +432,13 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow.connect(owner).withdrawFees(usdt.address)
     ).to.be.revertedWith("Amount > feesAvailable");
 
+    //call createEscrow zero
+    await expect(
+      paydeceEscrow
+        .connect(Buyer)
+        .createEscrow("1", Seller.address, 0, usdt.address, false, false)
+    ).to.be.revertedWith("'the parameter value cannot be zero");
+
     //call createEscrow
     await paydeceEscrow
       .connect(Buyer)
@@ -1273,6 +1280,13 @@ describe("PaydeceEscrow NativeCoin", function () {
           value: ammount,
         })
     ).to.be.revertedWith("Taker cannot be the same as maker");
+
+    //call createEscrow zero
+    await expect(
+      paydeceEscrow
+        .connect(Buyer)
+        .createEscrowNativeCoin("2", Seller.address, 0, false, false)
+    ).to.be.revertedWith("the parameter value cannot be zero");
 
     //Error the ammount
     await expect(
