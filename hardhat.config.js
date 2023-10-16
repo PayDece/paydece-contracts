@@ -82,5 +82,5 @@ module.exports = {
     apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH
     //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
   },
-  solidity: "0.8.7",
+  solidity: "0.8.19",
 };
