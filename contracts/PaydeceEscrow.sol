@@ -223,7 +223,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(_value > 0, "The parameter value cannot be zero");
 
         uint8 _decimals = 18;
-        //Obtiene el monto a transferir desde el comprador al contrato
+        //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
@@ -598,7 +598,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Status must be FIATCOIN_TRANSFERED"
         );
 
-        //Gets the amount to transfer from the buyer to the contract        //takerfee //makerfee
+        //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
         uint256 _amountFeeTaker = getAmountFeeTaker(_orderId, false);
 
@@ -631,7 +631,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         uint8 _decimals = 18; //Wei
 
-        //Gets the amount to transfer from the buyer to the contract        //takerfee //makerfee
+        //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = ((escrows[_orderId].value *
             (escrows[_orderId].makerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
