@@ -75,8 +75,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     //uint256 private feesAvailable;  // summation of fees that can be withdrawn
 
     constructor() {
-        feeTaker = 0;
-        feeMaker = 0;
+        timeProcess = 45 * 60; //45mi
     }
 
     // ================== Begin External functions ==================

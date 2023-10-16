@@ -1538,6 +1538,9 @@ describe("PaydeceEscrow NativeCoin", function () {
     );
     // console.log(prevBalance.toString())
 
+    // set TimeProcess
+    await paydeceEscrow.connect(owner).setTimeProcess("1");
+
     //Set Fee to 1%
     await paydeceEscrow.connect(owner).setFeeTaker("1000");
 
