@@ -311,24 +311,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(sent, "Transfer failed.");
     }
 
-    // ================== End External functions ==================
-
-    // ================== Begin External functions that are pure ==================
-    function version() external pure virtual returns (string memory) {
-        return "4.1.0";
-    }
-
-    // ================== End External functions that are pure ==================
-
-    /// ================== Begin Public functions ==================
-    function getState(uint _orderId) public view returns (EscrowStatus) {
+    function getState(uint _orderId) external view returns (EscrowStatus) {
         Escrow memory _escrow = escrows[_orderId];
         return _escrow.status;
     }
 
     function addStablesAddresses(
         address _addressStableToWhitelist
-    ) public onlyOwner {
+    ) external onlyOwner {
         whitelistedStablesAddresses[_addressStableToWhitelist] = true;
 
         emit addStablesAddressesEvent(_addressStableToWhitelist);
@@ -336,7 +326,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     function delStablesAddresses(
         address _addressStableToWhitelist
-    ) public onlyOwner {
+    ) external onlyOwner {
         whitelistedStablesAddresses[_addressStableToWhitelist] = false;
 
         emit delStablesAddressesEvent(_addressStableToWhitelist);
@@ -344,7 +334,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     function CancelMaker(
         uint256 _orderId
-    ) public nonReentrant onlyMaker(_orderId) {
+    ) external nonReentrant onlyMaker(_orderId) {
         // Valida el estado de la Escrow
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -373,7 +363,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     function CancelMakerNative(
         uint256 _orderId
-    ) public nonReentrant onlyMaker(_orderId) {
+    ) external nonReentrant onlyMaker(_orderId) {
         // Valida el estado de la Escrow
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -403,7 +393,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     function CancelTaker(
         uint256 _orderId
-    ) public nonReentrant onlyTaker(_orderId) {
+    ) external nonReentrant onlyTaker(_orderId) {
         // Valida el estado de la Escrow
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -431,7 +421,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     function CancelTakerNative(
         uint256 _orderId
-    ) public nonReentrant onlyTaker(_orderId) {
+    ) external nonReentrant onlyTaker(_orderId) {
         // Valida el estado de la Escrow
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -465,7 +455,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelTaker(_orderId, escrows[_orderId]);
     }
 
-    function setMarkAsPaid(uint256 _orderId) public onlyTaker(_orderId) {
+    function setMarkAsPaid(uint256 _orderId) external onlyTaker(_orderId) {
         // Valida el estado de la Escrow
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -478,7 +468,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowMarkAsPaid(_orderId, escrows[_orderId]);
     }
 
-    function setMarkAsPaidOwner(uint256 _orderId) public onlyOwner {
+    function setMarkAsPaidOwner(uint256 _orderId) external onlyOwner {
         // Valida el estado de la Escrow
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -490,6 +480,18 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         // emite evento
         emit EscrowMarkAsPaidOwner(_orderId, escrows[_orderId]);
     }
+
+    // ================== End External functions ==================
+
+    // ================== Begin External functions that are pure ==================
+    function version() external pure virtual returns (string memory) {
+        return "4.1.0";
+    }
+
+    // ================== End External functions that are pure ==================
+
+    /// ================== Begin Public functions ==================
+
     /// ================== End Public functions ==================
 
     // ================== Begin Private functions ==================
