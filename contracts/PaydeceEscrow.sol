@@ -10,8 +10,8 @@ import "./Ownable.sol";
 
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
     // 0.1 es 100 porque se multiplico por mil => 0.1 X 1000 = 100
-    uint256 public feeTaker;
-    uint256 public feeMaker;
+    uint16 public feeTaker;
+    uint16 public feeMaker;
     uint256 public feesAvailableNativeCoin;
     uint256 public timeProcess; //Tiempo que tienen para completar la transaccion
 
@@ -37,8 +37,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         bool maker_premium;
         bool taker_premium;
         uint256 value; //Monto compra
-        uint256 takerfee; //Comision vendedor
-        uint256 makerfee; //Comision comprador
+        uint16 takerfee; //Comision vendedor
+        uint16 makerfee; //Comision comprador
         IERC20 currency; //Moneda
         EscrowStatus status; //Estado
         uint256 created;
@@ -51,8 +51,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowCancelTaker(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaidOwner(uint indexed orderId, Escrow escrow);
-    event setFeeMakerEvent(uint256 feeMaker);
-    event setFeeTakerEvent(uint256 feeMaker);
+    event setFeeMakerEvent(uint16 feeMaker);
+    event setFeeTakerEvent(uint16 feeMaker);
     event setTimeProcessEvent(uint256 timeProcess);
     event addStablesAddressesEvent(address addressStable);
     event delStablesAddressesEvent(address addressStable);
@@ -79,7 +79,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     // ================== Begin External functions ==================
-    function setFeeTaker(uint256 _feeTaker) external onlyOwner {
+    function setFeeTaker(uint16 _feeTaker) external onlyOwner {
         require(
             _feeTaker >= 0 && _feeTaker <= (1 * 1000),
             "The fee can be from 0% to 1%"
@@ -89,7 +89,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit setFeeTakerEvent(_feeTaker);
     }
 
-    function setFeeMaker(uint256 _feeMaker) external onlyOwner {
+    function setFeeMaker(uint16 _feeMaker) external onlyOwner {
         require(
             _feeMaker >= 0 && _feeMaker <= (1 * 1000),
             "The fee can be from 0% to 1%"

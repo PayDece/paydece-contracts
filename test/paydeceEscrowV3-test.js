@@ -27,11 +27,11 @@ describe("setFeeMaker", () => {
       paydeceEscrow.connect(other).setFeeTaker("1000")
     ).to.be.revertedWith("caller is not the owner");
 
-    await expect(paydeceEscrow.setFeeTaker("100000")).to.be.revertedWith(
+    await expect(paydeceEscrow.setFeeTaker("10000")).to.be.revertedWith(
       "The fee can be from 0% to 1%"
     );
 
-    await expect(paydeceEscrow.setFeeTaker("100000")).to.be.revertedWith(
+    await expect(paydeceEscrow.setFeeTaker("10000")).to.be.revertedWith(
       "The fee can be from 0% to 1%"
     );
   });
