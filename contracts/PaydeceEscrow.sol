@@ -27,6 +27,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowCancelTaker(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaidOwner(uint indexed orderId, Escrow escrow);
+    event setFeeMakerEvent(uint256 feeMaker);
+    event setFeeTakerEvent(uint256 feeMaker);
+    event setTimeProcessEvent(uint256 timeProcess);
+    event addStablesAddressesEvent(address addressStable);
+    event delStablesAddressesEvent(address addressStable);
 
     // Maker defined as who buys usdt
     modifier onlyMaker(uint _orderId) {
@@ -85,6 +90,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "The fee can be from 0% to 1%"
         );
         feeTaker = _feeTaker;
+
+        emit setFeeTakerEvent(_feeTaker);
     }
 
     function setFeeMaker(uint256 _feeMaker) external onlyOwner {
@@ -93,6 +100,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "The fee can be from 0% to 1%"
         );
         feeMaker = _feeMaker;
+
+        emit setFeeMakerEvent(_feeMaker);
     }
     
     function setTimeProcess(uint256 _timeProcess) external onlyOwner {
@@ -101,6 +110,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "The timeProcess can be 0"
         );
         timeProcess = _timeProcess;
+
+        emit setTimeProcessEvent(timeProcess);
     }
 
     /* This is called by the server / contract owner */
@@ -318,12 +329,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         address _addressStableToWhitelist
     ) public onlyOwner {
         whitelistedStablesAddresses[_addressStableToWhitelist] = true;
+
+        emit addStablesAddressesEvent(_addressStableToWhitelist);
     }
 
     function delStablesAddresses(
         address _addressStableToWhitelist
     ) public onlyOwner {
         whitelistedStablesAddresses[_addressStableToWhitelist] = false;
+
+        emit delStablesAddressesEvent(_addressStableToWhitelist);
     }
 
     function CancelMaker(uint256 _orderId) public nonReentrant onlyMaker(_orderId){
