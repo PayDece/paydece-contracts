@@ -26,10 +26,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         CRYPTOS_IN_CUSTODY, // 2,
         FIATCOIN_TRANSFERED, // 3, dev un metodo publico owner y taker
         COMPLETED, // 4,
-        DELETED, // 5,
-        APPEALED, // 6,
         REFUND, // 7,
-        RELEASE, // 8
         CANCEL_MAKER, //9
         CANCEL_TAKER //10
     }
