@@ -9,11 +9,11 @@ import "./Context.sol";
 import "./Ownable.sol";
 
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
-    // 0.1 es 100 porque se multiplico por mil => 0.1 X 1000 = 100
+    // 0.1 is 100 because it is multiplied by a thousand => 0.1 X 1000 = 100
     uint16 public feeTaker;
     uint16 public feeMaker;
     uint256 public feesAvailableNativeCoin;
-    uint256 public timeProcess; //Tiempo que tienen para completar la transaccion
+    uint256 public timeProcess; //Time they have to complete the transaction
 
     using SafeERC20 for IERC20;
     mapping(uint => Escrow) public escrows;
@@ -24,7 +24,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         Unknown, //0
         ACTIVE, // 1,
         CRYPTOS_IN_CUSTODY, // 2,
-        FIATCOIN_TRANSFERED, // 3, dev un metodo publico owner y taker
+        FIATCOIN_TRANSFERED, // 3,
         COMPLETED, // 4,
         REFUND, // 7,
         CANCEL_MAKER, //9
@@ -32,15 +32,15 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     struct Escrow {
-        address payable maker; //Comprador
-        address payable taker; //Vendedor
+        address payable maker; //Maker
+        address payable taker; //Taker
         bool maker_premium;
         bool taker_premium;
-        uint256 value; //Monto compra
-        uint16 takerfee; //Comision vendedor
-        uint16 makerfee; //Comision comprador
-        IERC20 currency; //Moneda
-        EscrowStatus status; //Estado
+        uint256 value; // Purchase amount
+        uint16 takerfee; //Fee Taker
+        uint16 makerfee; //Fee Maker
+        IERC20 currency; //Money
+        EscrowStatus status; //Status
         uint256 created;
     }
 
@@ -57,7 +57,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event addStablesAddressesEvent(address addressStable);
     event delStablesAddressesEvent(address addressStable);
 
-    // Maker defined as who buys usdt
+    /**
+     * @notice  modifier only the maker
+     * @param   _orderId  .
+     */
     modifier onlyMaker(uint _orderId) {
         require(
             msg.sender == escrows[_orderId].maker,
@@ -66,6 +69,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         _;
     }
 
+    /**
+     * @notice  modifier only the taker
+     * @param   _orderId  .
+     */
     modifier onlyTaker(uint _orderId) {
         require(
             msg.sender == escrows[_orderId].taker,
@@ -79,6 +86,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     // ================== Begin External functions ==================
+    /**
+     * @notice  Set Fee Taker
+     * @param   _feeTaker  .
+     */
     function setFeeTaker(uint16 _feeTaker) external onlyOwner {
         require(
             _feeTaker >= 0 && _feeTaker <= (1 * 1000),
@@ -89,6 +100,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit setFeeTakerEvent(_feeTaker);
     }
 
+    /**
+     * @notice  Set Fee Maker
+     * @param   _feeMaker  .
+     */
     function setFeeMaker(uint16 _feeMaker) external onlyOwner {
         require(
             _feeMaker >= 0 && _feeMaker <= (1 * 1000),
@@ -99,6 +114,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit setFeeMakerEvent(_feeMaker);
     }
 
+    /**
+     * @notice  Set Time Process
+     * @param   _timeProcess  .
+     */
     function setTimeProcess(uint256 _timeProcess) external onlyOwner {
         require(_timeProcess > 0, "The timeProcess can be 0");
         timeProcess = _timeProcess;
@@ -106,6 +125,15 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit setTimeProcessEvent(timeProcess);
     }
 
+    /**
+     * @notice  Create Escrow
+     * @param   _orderId  .
+     * @param   _taker  .
+     * @param   _value  .
+     * @param   _currency  .
+     * @param   _maker_premium  .
+     * @param   _taker_premium  .
+     */
     function createEscrow(
         uint _orderId,
         address payable _taker,
@@ -126,12 +154,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Address Stable to be whitelisted"
         );
 
-        require(msg.sender != _taker, "taker cannot be the same as maker");
+        require(msg.sender != _taker, "Taker cannot be the same as maker");
 
-        require(_value > 0, "the parameter value cannot be zero");
+        require(_value > 0, "The parameter value cannot be zero");
 
         uint8 _decimals = _currency.decimals();
-        //Obtiene el monto a transferir desde el comprador al contrato
+        //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
@@ -139,7 +167,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             _amountFeeMaker = 0;
         }
 
-        //Valida el Allowance
+        //Allowance
         uint256 _allowance = _currency.allowance(msg.sender, address(this));
         require(
             _allowance >= (_value + _amountFeeMaker),
@@ -169,6 +197,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowDeposit(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Create Escrow Native Coin
+     * @param   _orderId  .
+     * @param   _taker  .
+     * @param   _value  .
+     * @param   _maker_premium  .
+     * @param   _taker_premium  .
+     */
     function createEscrowNativeCoin(
         uint _orderId,
         address payable _taker,
@@ -184,7 +220,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         require(msg.sender != _taker, "Taker cannot be the same as maker");
 
-        require(_value > 0, "the parameter value cannot be zero");
+        require(_value > 0, "The parameter value cannot be zero");
 
         uint8 _decimals = 18;
         //Obtiene el monto a transferir desde el comprador al contrato
@@ -214,26 +250,44 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowDeposit(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Release Escrow Owner
+     * @param   _orderId  .
+     */
     function releaseEscrowOwner(uint _orderId) external onlyOwner {
         _releaseEscrow(_orderId);
     }
 
+    /**
+     * @notice  Release Escrow Owner Native Coin
+     * @param   _orderId  .
+     */
     function releaseEscrowOwnerNativeCoin(uint _orderId) external onlyOwner {
         _releaseEscrowNativeCoin(_orderId);
     }
 
-    /* This is called by the maker wallet */
+    /**
+     * @notice  Release Escrow
+     * @param   _orderId  .
+     */
     function releaseEscrow(uint _orderId) external onlyMaker(_orderId) {
         _releaseEscrow(_orderId);
     }
 
+    /**
+     * @notice  Release Escrow Native Coin
+     * @param   _orderId  .
+     */
     function releaseEscrowNativeCoin(
         uint _orderId
     ) external onlyMaker(_orderId) {
         _releaseEscrowNativeCoin(_orderId);
     }
 
-    /// release funds to the maker - cancelled contract
+    /**
+     * @notice  release funds to the maker - cancelled contract
+     * @param   _orderId  .
+     */
     function refundMaker(uint _orderId) external nonReentrant onlyOwner {
         require(
             escrows[_orderId].status != EscrowStatus.REFUND,
@@ -254,6 +308,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowDisputeResolved(_orderId);
     }
 
+    /**
+     * @notice  Refund Maker Native Coin
+     * @param   _orderId  .
+     */
     function refundMakerNativeCoin(
         uint _orderId
     ) external nonReentrant onlyOwner {
@@ -279,6 +337,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowDisputeResolved(_orderId);
     }
 
+    /**
+     * @notice  Withdraw Fees
+     * @param   _currency  .
+     */
     function withdrawFees(IERC20 _currency) external onlyOwner {
         uint _amount;
 
@@ -292,13 +354,15 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         _currency.safeTransfer(owner(), _amount);
     }
 
+    /**
+     * @notice  Withdraw Fees Native Coin
+     */
     function withdrawFeesNativeCoin() external onlyOwner {
         uint256 _amount;
 
         // This check also prevents underflow
         require(feesAvailableNativeCoin > 0, "Amount > feesAvailable");
 
-        //_amount = feesAvailable[_currency];
         _amount = feesAvailableNativeCoin;
 
         feesAvailableNativeCoin -= _amount;
@@ -308,11 +372,20 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(sent, "Transfer failed.");
     }
 
+    /**
+     * @notice  Get State
+     * @param   _orderId  .
+     * @return  EscrowStatus  .
+     */
     function getState(uint _orderId) external view returns (EscrowStatus) {
         Escrow memory _escrow = escrows[_orderId];
         return _escrow.status;
     }
 
+    /**
+     * @notice  Add Stables Addresses
+     * @param   _addressStableToWhitelist  .
+     */
     function addStablesAddresses(
         address _addressStableToWhitelist
     ) external onlyOwner {
@@ -321,6 +394,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit addStablesAddressesEvent(_addressStableToWhitelist);
     }
 
+    /**
+     * @notice  Delete Stables Addresses
+     * @param   _addressStableToWhitelist  .
+     */
     function delStablesAddresses(
         address _addressStableToWhitelist
     ) external onlyOwner {
@@ -329,10 +406,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit delStablesAddressesEvent(_addressStableToWhitelist);
     }
 
+    /**
+     * @notice  Cancel Maker
+     * @param   _orderId  .
+     */
     function cancelMaker(
         uint256 _orderId
     ) external nonReentrant onlyMaker(_orderId) {
-        // Valida el estado de la Escrow
+        // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
@@ -340,28 +421,33 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         uint256 _timeDiff = block.timestamp - escrows[_orderId].created;
 
-        // validacióm de tiempo de proceso
+        // Process time validation
         require(_timeDiff > timeProcess, "Time is still running out.");
 
-        // cambio de estado
+        // Status change
         escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
 
         //get Amount Fee Maker
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
+
         //Transfer to maker
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].maker,
             escrows[_orderId].value + _amountFeeMaker
         );
 
-        // emite evento
+        // emit event
         emit EscrowCancelMaker(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Cancel Maker Native
+     * @param   _orderId  .
+     */
     function cancelMakerNative(
         uint256 _orderId
     ) external nonReentrant onlyMaker(_orderId) {
-        // Valida el estado de la Escrow
+        // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
@@ -369,10 +455,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         uint256 _timeDiff = block.timestamp - escrows[_orderId].created;
 
-        // validacióm de tiempo de proceso
+        // Process time validation
         require(_timeDiff > timeProcess, "Time is still running out.");
 
-        // cambio de estado
+        // Status change
         escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
 
         //get Amount Fee Maker
@@ -384,20 +470,24 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         }("");
         require(sent, "Transfer failed.");
 
-        // emite evento
+        // emit event
         emit EscrowCancelMaker(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Cancel Taker
+     * @param   _orderId  .
+     */
     function cancelTaker(
         uint256 _orderId
     ) external nonReentrant onlyTaker(_orderId) {
-        // Valida el estado de la Escrow
+        // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
         );
 
-        // cambio de estado
+        // Status change
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeTaker
@@ -412,20 +502,24 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             (escrows[_orderId].value + _amountFeeTaker)
         );
 
-        // emite evento
+        // emit event
         emit EscrowCancelTaker(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Cancel Taker Native
+     * @param   _orderId  .
+     */
     function cancelTakerNative(
         uint256 _orderId
     ) external nonReentrant onlyTaker(_orderId) {
-        // Valida el estado de la Escrow
+        // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
         );
 
-        // cambio de estado
+        // Status change
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeTaker
@@ -434,26 +528,20 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         //update fee amount
         feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;
 
-        //Transfer to taker Price Asset - FeeTaker
-        // (bool sent, ) = escrows[_orderId].maker.call{
-        //     value: escrows[_orderId].value + _amountFeeTaker
-        // }("");
-        // require(sent, "Transfer failed.");
-
         escrows[_orderId].maker.transfer(
             escrows[_orderId].value + _amountFeeTaker
         );
-        // escrows[_orderId].maker.transfer(address(this).balance);
 
-        // bool sent = escrows[_orderId].maker.send(_amountFeeTaker);
-        // require(sent, "Failed to send Ether");
-
-        // emite evento
+        // emit event
         emit EscrowCancelTaker(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Set Mark As Paid
+     * @param   _orderId  .
+     */
     function setMarkAsPaid(uint256 _orderId) external onlyTaker(_orderId) {
-        // Valida el estado de la Escrow
+        // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
@@ -461,12 +549,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         escrows[_orderId].status = EscrowStatus.FIATCOIN_TRANSFERED;
 
-        // emite evento
+        // emit event
         emit EscrowMarkAsPaid(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Set Mark As Paid Owner
+     * @param   _orderId  .
+     */
     function setMarkAsPaidOwner(uint256 _orderId) external onlyOwner {
-        // Valida el estado de la Escrow
+        // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
@@ -474,13 +566,17 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         escrows[_orderId].status = EscrowStatus.FIATCOIN_TRANSFERED;
 
-        // emite evento
+        // emit event
         emit EscrowMarkAsPaidOwner(_orderId, escrows[_orderId]);
     }
 
     // ================== End External functions ==================
 
     // ================== Begin External functions that are pure ==================
+    /**
+     * @notice  Get Version
+     * @return  string  .
+     */
     function version() external pure virtual returns (string memory) {
         return "4.1.0";
     }
@@ -492,13 +588,17 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// ================== End Public functions ==================
 
     // ================== Begin Private functions ==================
+    /**
+     * @notice  Release Escrow
+     * @param   _orderId  .
+     */
     function _releaseEscrow(uint _orderId) private nonReentrant {
         require(
             escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
             "Status must be FIATCOIN_TRANSFERED"
         );
 
-        //Obtiene el monto a transferir desde el comprador al contrato        //takerfee //makerfee
+        //Gets the amount to transfer from the buyer to the contract        //takerfee //makerfee
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
         uint256 _amountFeeTaker = getAmountFeeTaker(_orderId, false);
 
@@ -519,6 +619,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowComplete(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Release Escrow Native Coin
+     * @param   _orderId  .
+     */
     function _releaseEscrowNativeCoin(uint _orderId) private nonReentrant {
         require(
             escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
@@ -527,7 +631,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         uint8 _decimals = 18; //Wei
 
-        //Obtiene el monto a transferir desde el comprador al contrato        //takerfee //makerfee
+        //Gets the amount to transfer from the buyer to the contract        //takerfee //makerfee
         uint256 _amountFeeMaker = ((escrows[_orderId].value *
             (escrows[_orderId].makerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
@@ -535,7 +639,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             (escrows[_orderId].takerfee * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
 
-        // Validaciones Premium
+        // Premium Validations
         if (escrows[_orderId].maker_premium) {
             _amountFeeMaker = 0;
         }
@@ -543,7 +647,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             _amountFeeTaker = 0;
         }
 
-        //Registra los fees obtenidos para Paydece
+        //Record the fees obtained for Paydece
         feesAvailableNativeCoin += _amountFeeMaker + _amountFeeTaker;
 
         // write as complete, in case transfer fails
@@ -558,6 +662,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowComplete(_orderId, escrows[_orderId]);
     }
 
+    /**
+     * @notice  Get Amount Fee Taker
+     * @param   _orderId  .
+     * @param   _native  .
+     * @return  uint256  .
+     */
     function getAmountFeeTaker(
         uint256 _orderId,
         bool _native
@@ -582,6 +692,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         return _amountFeeTaker;
     }
 
+    /**
+     * @notice  Get Amount Fee Maker
+     * @param   _orderId  .
+     * @param   _native  .
+     * @return  uint256  .
+     */
     function getAmountFeeMaker(
         uint256 _orderId,
         bool _native

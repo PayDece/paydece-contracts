@@ -185,7 +185,7 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow
         .connect(Seller)
         .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("taker cannot be the same as maker");
+    ).to.be.revertedWith("Taker cannot be the same as maker");
 
     //call approve
     await usdt
@@ -284,7 +284,7 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow
         .connect(Seller)
         .createEscrow("1", Seller.address, ammount, usdt.address, false, false)
-    ).to.be.revertedWith("taker cannot be the same as maker");
+    ).to.be.revertedWith("Taker cannot be the same as maker");
 
     //call approve
     await usdt
@@ -437,7 +437,7 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow
         .connect(Buyer)
         .createEscrow("1", Seller.address, 0, usdt.address, false, false)
-    ).to.be.revertedWith("'the parameter value cannot be zero");
+    ).to.be.revertedWith("The parameter value cannot be zero");
 
     //call createEscrow taker zero
     await expect(
@@ -541,7 +541,7 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow
         .connect(Seller)
         .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("taker cannot be the same as maker");
+    ).to.be.revertedWith("Taker cannot be the same as maker");
 
     //call approve
     await usdt
@@ -644,7 +644,7 @@ describe("PaydeceEscrow StableCoin", function () {
       paydeceEscrow
         .connect(Seller)
         .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("taker cannot be the same as maker");
+    ).to.be.revertedWith("Taker cannot be the same as maker");
 
     //call approve
     await usdt
@@ -753,7 +753,7 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
       paydeceEscrow
         .connect(Seller)
         .createEscrow("1", Seller.address, ammount, usdt.address, true, true)
-    ).to.be.revertedWith("taker cannot be the same as maker");
+    ).to.be.revertedWith("Taker cannot be the same as maker");
 
     //call approve
     await usdt
@@ -852,7 +852,7 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
       paydeceEscrow
         .connect(Seller)
         .createEscrow("1", Seller.address, ammount, usdt.address, false, false)
-    ).to.be.revertedWith("taker cannot be the same as maker");
+    ).to.be.revertedWith("Taker cannot be the same as maker");
 
     //call approve
     await usdt
@@ -1083,7 +1083,7 @@ describe("PaydeceEscrow StableCoin releaseEscrowOwner", function () {
       paydeceEscrow
         .connect(Seller)
         .createEscrow("1", Seller.address, ammount, usdt.address, false, false)
-    ).to.be.revertedWith("taker cannot be the same as maker");
+    ).to.be.revertedWith("Taker cannot be the same as maker");
 
     //call approve
     await usdt
@@ -1299,7 +1299,7 @@ describe("PaydeceEscrow NativeCoin", function () {
       paydeceEscrow
         .connect(Buyer)
         .createEscrowNativeCoin("2", Seller.address, 0, false, false)
-    ).to.be.revertedWith("the parameter value cannot be zero");
+    ).to.be.revertedWith("The parameter value cannot be zero");
 
     //call createEscrow taker zero
     await expect(
