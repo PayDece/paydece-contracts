@@ -329,7 +329,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit delStablesAddressesEvent(_addressStableToWhitelist);
     }
 
-    function CancelMaker(
+    function cancelMaker(
         uint256 _orderId
     ) external nonReentrant onlyMaker(_orderId) {
         // Valida el estado de la Escrow
@@ -358,7 +358,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelMaker(_orderId, escrows[_orderId]);
     }
 
-    function CancelMakerNative(
+    function cancelMakerNative(
         uint256 _orderId
     ) external nonReentrant onlyMaker(_orderId) {
         // Valida el estado de la Escrow
@@ -388,7 +388,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelMaker(_orderId, escrows[_orderId]);
     }
 
-    function CancelTaker(
+    function cancelTaker(
         uint256 _orderId
     ) external nonReentrant onlyTaker(_orderId) {
         // Valida el estado de la Escrow
@@ -416,7 +416,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowCancelTaker(_orderId, escrows[_orderId]);
     }
 
-    function CancelTakerNative(
+    function cancelTakerNative(
         uint256 _orderId
     ) external nonReentrant onlyTaker(_orderId) {
         // Valida el estado de la Escrow

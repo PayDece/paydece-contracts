@@ -565,13 +565,13 @@ describe("PaydeceEscrow StableCoin", function () {
     ).to.be.revertedWith("Only Maker can call this");
 
     await expect(
-      paydeceEscrow.connect(other).CancelTaker("1")
+      paydeceEscrow.connect(other).cancelTaker("1")
     ).to.be.revertedWith("Only Taker can call this");
 
-    await paydeceEscrow.connect(Seller).CancelTaker("1");
+    await paydeceEscrow.connect(Seller).cancelTaker("1");
 
     await expect(
-      paydeceEscrow.connect(Seller).CancelTaker("1")
+      paydeceEscrow.connect(Seller).cancelTaker("1")
     ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get Balance
@@ -669,17 +669,16 @@ describe("PaydeceEscrow StableCoin", function () {
 
     await paydeceEscrow.connect(owner).setTimeProcess(5000);
 
-    //await paydeceEscrow.connect(Buyer).CancelMaker("1");
     await expect(
-      paydeceEscrow.connect(Buyer).CancelMaker("1")
+      paydeceEscrow.connect(Buyer).cancelMaker("1")
     ).to.be.revertedWith("Time is still running out.");
 
     await paydeceEscrow.connect(owner).setTimeProcess(1);
 
-    await paydeceEscrow.connect(Buyer).CancelMaker("1");
+    await paydeceEscrow.connect(Buyer).cancelMaker("1");
 
     await expect(
-      paydeceEscrow.connect(Buyer).CancelMaker("1")
+      paydeceEscrow.connect(Buyer).cancelMaker("1")
     ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get Balance
@@ -1555,11 +1554,11 @@ describe("PaydeceEscrow NativeCoin", function () {
 
     //call releaseEscrow Error
     await expect(
-      paydeceEscrow.connect(Seller).CancelMakerNative("2")
+      paydeceEscrow.connect(Seller).cancelMakerNative("2")
     ).to.be.revertedWith("Only Maker can call this");
 
     //call releaseEscrow
-    await paydeceEscrow.connect(Buyer).CancelMakerNative("2");
+    await paydeceEscrow.connect(Buyer).cancelMakerNative("2");
 
     //get balance sc paydece
     const afterbalanceSC = await ethers.provider.getBalance(
@@ -1637,12 +1636,12 @@ describe("PaydeceEscrow NativeCoin", function () {
     // console.log("----------afterbalanceSC2:" + afterbalanceSC2.toString());
 
     await expect(
-      paydeceEscrow.connect(Maker).CancelTakerNative("3")
+      paydeceEscrow.connect(Maker).cancelTakerNative("3")
     ).to.be.revertedWith("Only Taker can call this");
 
     // var escrow = await paydeceEscrow.escrows(2);
 
-    await paydeceEscrow.connect(Taker).CancelTakerNative("3");
+    await paydeceEscrow.connect(Taker).cancelTakerNative("3");
 
     //get balance sc paydece
     const afterbalanceSC = await ethers.provider.getBalance(
