@@ -17,7 +17,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     using SafeERC20 for IERC20;
     mapping(uint => Escrow) public escrows;
-    mapping(address => bool) whitelistedStablesAddresses;
+    mapping(address => bool) private whitelistedStablesAddresses;
     mapping(IERC20 => uint) public feesAvailable;
 
     enum EscrowStatus {
