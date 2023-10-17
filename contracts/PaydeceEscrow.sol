@@ -159,6 +159,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(_value > 0, "The parameter value cannot be zero");
 
         uint8 _decimals = _currency.decimals();
+
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
@@ -223,6 +224,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(_value > 0, "The parameter value cannot be zero");
 
         uint8 _decimals = 18;
+
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
             (100 * 10 ** _decimals)) / 1000;
@@ -578,7 +580,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @return  string  .
      */
     function version() external pure virtual returns (string memory) {
-        return "4.1.0";
+        return "4.2.0";
     }
 
     // ================== End External functions that are pure ==================
