@@ -166,14 +166,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         if (!_maker_premium) {
             _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
                 (100 * 10 ** _decimals)) / 1000;
-        }
-
-        //Allowance
-        uint256 _allowance = _currency.allowance(msg.sender, address(this));
-        require(
-            _allowance >= (_value + _amountFeeMaker),
-            "Taker approve to Escrow first"
-        );
+        }        
 
         //Transfer USDT to contract
         _currency.safeTransferFrom(
