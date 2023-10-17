@@ -161,11 +161,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint8 _decimals = _currency.decimals();
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
-            (100 * 10 ** _decimals)) / 1000;
-
-        if (_maker_premium) {
-            _amountFeeMaker = 0;
+        uint256 _amountFeeMaker = 0;
+        
+        if (!_maker_premium) {
+            _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
+                (100 * 10 ** _decimals)) / 1000;
         }
 
         //Allowance
@@ -226,11 +226,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint8 _decimals = 18;
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
-            (100 * 10 ** _decimals)) / 1000;
+        uint256 _amountFeeMaker = 0;
 
-        if (_maker_premium) {
-            _amountFeeMaker = 0;
+        if (!_maker_premium) {
+            _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
+                (100 * 10 ** _decimals)) / 1000;
         }
 
         //Verification was added for the user to send the exact amount of native tokens to escrow.
@@ -634,19 +634,19 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint8 _decimals = 18; //Wei
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = ((escrows[_orderId].value *
-            (escrows[_orderId].makerfee * 10 ** _decimals)) /
-            (100 * 10 ** _decimals)) / 1000;
-        uint256 _amountFeeTaker = ((escrows[_orderId].value *
-            (escrows[_orderId].takerfee * 10 ** _decimals)) /
-            (100 * 10 ** _decimals)) / 1000;
-
+        uint256 _amountFeeMaker = 0;
         // Premium Validations
-        if (escrows[_orderId].maker_premium) {
-            _amountFeeMaker = 0;
+        if (!escrows[_orderId].maker_premium) {
+            _amountFeeMaker = ((escrows[_orderId].value *
+                (escrows[_orderId].makerfee * 10 ** _decimals)) /
+                (100 * 10 ** _decimals)) / 1000;
         }
-        if (escrows[_orderId].taker_premium) {
-            _amountFeeTaker = 0;
+
+        uint256 _amountFeeTaker = 0;
+        if (!escrows[_orderId].taker_premium) {
+            _amountFeeTaker = ((escrows[_orderId].value *
+                (escrows[_orderId].takerfee * 10 ** _decimals)) /
+                (100 * 10 ** _decimals)) / 1000;
         }
 
         //Record the fees obtained for Paydece
@@ -676,19 +676,18 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     ) private view returns (uint256) {
         //get decimal of stable
         uint8 _decimals = 18;
+        uint256 _amountFeeTaker = 0;
 
         if (!_native) {
             _decimals = escrows[_orderId].currency.decimals();
         }
 
-        //get amountFeeTaker
-        uint256 _amountFeeTaker = ((escrows[_orderId].value *
-            (escrows[_orderId].takerfee * 10 ** _decimals)) /
-            (100 * 10 ** _decimals)) / 1000;
-
         // Validations Premium
-        if (escrows[_orderId].taker_premium) {
-            _amountFeeTaker = 0;
+        if (!escrows[_orderId].taker_premium) {
+            //get amountFeeTaker
+            _amountFeeTaker = ((escrows[_orderId].value *
+                (escrows[_orderId].takerfee * 10 ** _decimals)) /
+                (100 * 10 ** _decimals)) / 1000;
         }
 
         return _amountFeeTaker;
@@ -712,16 +711,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             _decimals = escrows[_orderId].currency.decimals();
         }
 
-        //get amountFeeTaker
-        _amountFeeMaker =
-            ((escrows[_orderId].value *
-                (escrows[_orderId].makerfee * 10 ** _decimals)) /
-                (100 * 10 ** _decimals)) /
-            1000;
-
         // Validations Premium
-        if (escrows[_orderId].taker_premium) {
-            _amountFeeMaker = 0;
+        if (!escrows[_orderId].taker_premium) {
+            //get amountFeeTaker
+            _amountFeeMaker =
+                ((escrows[_orderId].value *
+                    (escrows[_orderId].makerfee * 10 ** _decimals)) /
+                    (100 * 10 ** _decimals)) /
+                1000;
         }
 
         return _amountFeeMaker;

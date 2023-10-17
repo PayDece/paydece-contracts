@@ -2064,6 +2064,6 @@ describe("Contract Read Methods", () => {
     const _verion = await paydeceEscrow.version();
 
     //console.log("_verion:" + _verion);
-    expect(_verion).to.equal("4.1.0");
+    expect(_verion).to.equal("4.2.0");
   });
 });
