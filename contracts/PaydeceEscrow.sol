@@ -46,11 +46,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     event EscrowDeposit(uint indexed orderId, Escrow escrow);
     event EscrowComplete(uint indexed orderId, Escrow escrow);
-    event EscrowDisputeResolved(uint indexed orderId);
     event EscrowCancelMaker(uint indexed orderId, Escrow escrow);
     event EscrowCancelTaker(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaidOwner(uint indexed orderId, Escrow escrow);
+    event EscrowRefundMaker(uint indexed orderId, Escrow escrow);
+    event EscrowRefundMakerNativeCoin(uint indexed orderId, Escrow escrow);
     event setFeeMakerEvent(uint16 feeMaker);
     event setFeeTakerEvent(uint16 feeMaker);
     event setTimeProcessEvent(uint256 timeProcess);
@@ -300,7 +301,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         _currency.safeTransfer(_maker, _value + _amountFeeMaker);
 
-        emit EscrowDisputeResolved(_orderId);
+        emit EscrowRefundMaker(_orderId, escrows[_orderId]);
     }
 
     /**
@@ -329,7 +330,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         }("");
         require(sent, "Transfer failed.");
 
-        emit EscrowDisputeResolved(_orderId);
+        emit EscrowRefundMakerNativeCoin(_orderId, escrows[_orderId]);
     }
 
     /**
@@ -346,7 +347,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         feesAvailable[_currency] -= _amount;
 
-        _currency.safeTransfer(owner(), _amount);
+        _currency.safeTransfer(owner(), _currency.balanceOf(address(this)));
     }
 
     /**
@@ -363,7 +364,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         feesAvailableNativeCoin -= _amount;
 
         //Transfer
-        (bool sent, ) = payable(msg.sender).call{value: _amount}("");
+        (bool sent, ) = payable(msg.sender).call{value: address(this).balance}("");
         require(sent, "Transfer failed.");
     }
 
