@@ -670,6 +670,10 @@ describe("PaydeceEscrow StableCoin", function () {
     await paydeceEscrow.connect(owner).setTimeProcess(5000);
 
     await expect(
+      paydeceEscrow.connect(Seller).cancelMaker("1")
+    ).to.be.revertedWith("Only Maker can call this");
+
+    await expect(
       paydeceEscrow.connect(Buyer).cancelMaker("1")
     ).to.be.revertedWith("Time is still running out.");
 
@@ -776,6 +780,11 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
       paydeceEscrow.connect(other).releaseEscrow("1")
     ).to.be.revertedWith("Only Maker can call this");
 
+    // await paydeceEscrow.connect(other).setMarkAsPaidOwner("1");
+    await expect(
+      paydeceEscrow.connect(other).setMarkAsPaidOwner("1")
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+
     //call setMarkAsPaid
     await paydeceEscrow.connect(owner).setMarkAsPaidOwner("1");
 
@@ -877,6 +886,11 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
 
     //call setMarkAsPaid
     await paydeceEscrow.connect(Seller).setMarkAsPaid("1");
+
+
+    await expect(
+      paydeceEscrow.connect(other).releaseEscrowOwner("1")
+    ).to.be.revertedWith("Ownable: caller is not the owner");
 
     //call releaseEscrowOwner
     await paydeceEscrow.connect(owner).releaseEscrowOwner("1");
@@ -1537,6 +1551,10 @@ describe("PaydeceEscrow NativeCoin", function () {
     );
     // console.log(prevBalance.toString())
 
+    await expect(
+      paydeceEscrow.connect(other).setTimeProcess("1")
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+
     // set TimeProcess
     await paydeceEscrow.connect(owner).setTimeProcess("1");
 
@@ -1551,14 +1569,26 @@ describe("PaydeceEscrow NativeCoin", function () {
       .createEscrowNativeCoin("2", Seller.address, ammount, false, false, {
         value: ammount,
       });
-
+    
+    await paydeceEscrow.connect(owner).setTimeProcess(100000);
+    
+    await expect(
+      paydeceEscrow.connect(Buyer).cancelMakerNative("2")
+    ).to.be.revertedWith("Time is still running out.");
+    
+    await paydeceEscrow.connect(owner).setTimeProcess(1);
+    
     //call releaseEscrow Error
     await expect(
       paydeceEscrow.connect(Seller).cancelMakerNative("2")
     ).to.be.revertedWith("Only Maker can call this");
-
+    
     //call releaseEscrow
     await paydeceEscrow.connect(Buyer).cancelMakerNative("2");
+
+    await expect(
+      paydeceEscrow.connect(Buyer).cancelMakerNative("2")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
 
     //get balance sc paydece
     const afterbalanceSC = await ethers.provider.getBalance(
@@ -1642,6 +1672,11 @@ describe("PaydeceEscrow NativeCoin", function () {
     // var escrow = await paydeceEscrow.escrows(2);
 
     await paydeceEscrow.connect(Taker).cancelTakerNative("3");
+
+    await expect(
+      paydeceEscrow.connect(Taker).cancelTakerNative("3")
+    ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
+
 
     //get balance sc paydece
     const afterbalanceSC = await ethers.provider.getBalance(
@@ -1871,11 +1906,19 @@ describe("PaydeceEscrow NativeCoin", function () {
 describe("Contract Ownership", () => {
   it("you should transfer Ownership", async () => {
     let PaydeceEscrow, paydeceEscrow;
-    const [owner, newOwner] = await ethers.getSigners();
+    const [owner, newOwner,other] = await ethers.getSigners();
 
     PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
     paydeceEscrow = await PaydeceEscrow.deploy();
     await paydeceEscrow.deployed();
+
+    await expect(
+      paydeceEscrow.connect(other).transferOwnership(ethers.constants.AddressZero)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    
+    await expect(
+      paydeceEscrow.transferOwnership(ethers.constants.AddressZero)
+    ).to.be.revertedWith("Ownable: new owner is the zero address");
 
     await paydeceEscrow.transferOwnership(newOwner.address);
 
@@ -1886,11 +1929,15 @@ describe("Contract Ownership", () => {
 
   it("you should renounce Ownership", async () => {
     let PaydeceEscrow, paydeceEscrow;
-    //const [owner, newOwner] = await ethers.getSigners();
+    const [owner, newOwner,other] = await ethers.getSigners();
 
     PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
     paydeceEscrow = await PaydeceEscrow.deploy();
     await paydeceEscrow.deployed();
+
+    await expect(
+      paydeceEscrow.connect(other).renounceOwnership()
+    ).to.be.revertedWith("Ownable: caller is not the owner");
 
     await paydeceEscrow.renounceOwnership();
 

@@ -487,7 +487,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeTaker
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId, false);
+        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId);
 
         //update fee amount
         feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;
@@ -596,7 +596,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId, false);
+        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId);
 
         //feesAvailable += _amountFeeMaker + _amountFeeTaker;
         feesAvailable[escrows[_orderId].currency] +=
@@ -661,20 +661,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /**
      * @notice  Get Amount Fee Taker
      * @param   _orderId  .
-     * @param   _native  .
      * @return  uint256  .
      */
     function getAmountFeeTaker(
-        uint256 _orderId,
-        bool _native
+        uint256 _orderId
     ) private view returns (uint256) {
         //get decimal of stable
         uint8 _decimals = 18;
         uint256 _amountFeeTaker = 0;
 
-        if (!_native) {
-            _decimals = escrows[_orderId].currency.decimals();
-        }
+        _decimals = escrows[_orderId].currency.decimals();
 
         // Validations Premium
         if (!escrows[_orderId].taker_premium) {
