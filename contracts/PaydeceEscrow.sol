@@ -486,16 +486,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         // Status change
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
-        //get amountFeeTaker
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId);
+        //get amountFeeMaker
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,false);
 
         //update fee amount
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;
+        feesAvailable[escrows[_orderId].currency] -= _amountFeeMaker;
 
         //Transfer to Taker
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].maker,
-            (escrows[_orderId].value + _amountFeeTaker)
+            (escrows[_orderId].value + _amountFeeMaker)
         );
 
         // emit event
