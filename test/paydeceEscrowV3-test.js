@@ -211,24 +211,27 @@ describe("PaydeceEscrow StableCoin", function () {
     await expect(
       paydeceEscrow.connect(other).releaseEscrow("1")
     ).to.be.revertedWith("Only Maker can call this");
-
+    
     //call setMarkAsPaid
     await paydeceEscrow.connect(Seller).setMarkAsPaid("1");
 
     //call releaseEscrow
     await paydeceEscrow.connect(Buyer).releaseEscrow("1");
 
+    // const __state = await paydeceEscrow.connect(owner).getState("1");
+    //  console.log("stata:",__state);    
+
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
-    //console.log("scBalance:" + scBalance);
+    // console.log("scBalance:" , scBalance);
     expect(Number(scBalance)).to.equal(Number(0));
 
     const buyerBalance = await usdt.balanceOf(Buyer.address);
-    //console.log("buyerBalance:" + buyerBalance);
+    // console.log("buyerBalance:" , buyerBalance.toString());
     expect(Number(buyerBalance)).to.equal(Number(0));
 
     const sellerBalance = await usdt.balanceOf(Seller.address);
-    //console.log("sellerBalance:" + sellerBalance);
+    // console.log("sellerBalance:" , sellerBalance.toString());
     expect(Number(sellerBalance)).to.equal(Number(100 * 10 ** decimals));
   });
 
@@ -347,18 +350,18 @@ describe("PaydeceEscrow StableCoin", function () {
     const decimals = await usdt.connect(Buyer).decimals();
     const ammount = 100 * 10 ** decimals;
 
-    const _amountFeeTaker =
-      (ammount * (1000 * 10 ** decimals)) / (100 * 10 ** decimals) / 1000;
+    const _amountFeeMaker =
+      (ammount * (1000 * 10 ** decimals)) / (100 * 10 ** decimals) / 1000;      
 
     //transfer
-    await usdt.transfer(Buyer.address, ammount + _amountFeeTaker);
+    await usdt.transfer(Buyer.address, ammount + _amountFeeMaker);
 
     //call approve
     await usdt
       .connect(Buyer)
       .approve(
         paydeceEscrow.address,
-        ammount + _amountFeeTaker + _amountFeeTaker
+        ammount + _amountFeeMaker
       );
 
     //call createEscrow
@@ -366,6 +369,10 @@ describe("PaydeceEscrow StableCoin", function () {
       .connect(Buyer)
       .createEscrow("1", Seller.address, ammount, usdt.address, false, false);
 
+    
+    // const _feeAvaible = await paydeceEscrow.connect(Buyer).feesAvailable(usdt.address);  
+    // console.log("_feeAvaible",_feeAvaible.toString());
+    
     //call refundBuyer Error
     await expect(
       paydeceEscrow.connect(other).refundMaker("1")
@@ -373,12 +380,11 @@ describe("PaydeceEscrow StableCoin", function () {
 
     //call refundBuyer
     await paydeceEscrow.connect(owner).refundMaker("1");
-
-    //call refundBuyer
-    await expect(
-      paydeceEscrow.connect(owner).refundMaker("1")
-    ).to.be.revertedWith("Refund not approved");
-
+  //call refundBuyer
+  await expect(
+    paydeceEscrow.connect(owner).refundMaker("1")
+  ).to.be.revertedWith("Refund not approved");    
+    
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     // console.log("==========scBalance:" + scBalance);
@@ -687,7 +693,7 @@ describe("PaydeceEscrow StableCoin", function () {
 
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
-    //console.log("scBalance:" + scBalance);
+    // console.log("scBalance:" , scBalance.toString());
     expect(Number(scBalance)).to.equal(Number(0));
 
     const buyerBalance = await usdt.balanceOf(Buyer.address);
@@ -797,22 +803,23 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
 
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
-    //console.log("scBalance:" + scBalance);
+    // console.log("scBalance:" , scBalance.toString());
     expect(Number(scBalance)).to.equal(Number(0));
-
+    
     const buyerBalance = await usdt.balanceOf(Buyer.address);
     //console.log("buyerBalance:" + buyerBalance);
     expect(Number(buyerBalance)).to.equal(Number(0));
-
+    
     const sellerBalance = await usdt.balanceOf(Seller.address);
     //console.log("sellerBalance:" + sellerBalance);
     expect(Number(sellerBalance)).to.equal(Number(100 * 10 ** decimals));
+    
   });
 
   it("should releaseEscrowOwner to Seller StableCoin", async function () {
     let PaydeceEscrow, paydeceEscrow;
     let USDT, usdt;
-
+    
     PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
     paydeceEscrow = await PaydeceEscrow.deploy();
     await paydeceEscrow.deployed();
@@ -894,10 +901,11 @@ describe("PaydeceEscrow StableCoin setMarkAsPaidOwner", function () {
 
     //call releaseEscrowOwner
     await paydeceEscrow.connect(owner).releaseEscrowOwner("1");
-
+    
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     expect(Number(scBalance)).to.equal(Number(1 * 10 ** decimals));
+
     const buyerBalance = await usdt.balanceOf(Buyer.address);
     expect(Number(buyerBalance)).to.equal(Number(0));
     const sellerBalance = await usdt.balanceOf(Seller.address);
@@ -1276,6 +1284,66 @@ describe("PaydeceEscrow StableCoin releaseEscrowOwner", function () {
       Number(scBalance) + Number(_feesAvailable)
     );
   });
+
+
+  //Require FIATCOIN_TRANSFERED
+  it("should refund StableCoin Require FIATCOIN_TRANSFERED", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Seller, Buyer, other] = await ethers.getSigners();
+
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeMaker("1000");
+
+    //call addStablesAddresses
+    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
+
+    //Set amount
+    const decimals = await usdt.connect(Buyer).decimals();
+    const ammount = 100 * 10 ** decimals;
+
+    const _amountFeeTaker =
+      (ammount * (1000 * 10 ** decimals)) / (100 * 10 ** decimals) / 1000;
+
+    //transfer
+    await usdt.transfer(Buyer.address, ammount + _amountFeeTaker);
+
+    //call approve
+    await usdt
+      .connect(Buyer)
+      .approve(
+        paydeceEscrow.address,
+        ammount + _amountFeeTaker + _amountFeeTaker
+      );
+
+    //call createEscrow
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrow("1", Seller.address, ammount, usdt.address, false, false);
+
+    //call refundBuyer Error
+    await expect(
+      paydeceEscrow.connect(other).refundMaker("1")
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+
+    await paydeceEscrow.connect(Seller).setMarkAsPaid("1");
+
+    //call refundBuyer
+    await paydeceEscrow.connect(owner).refundMaker("1");
+
+    
+  });
+
 });
 
 describe("PaydeceEscrow NativeCoin", function () {
@@ -1514,16 +1582,69 @@ describe("PaydeceEscrow NativeCoin", function () {
     // console.log("----------afterbalanceSC:"+afterbalanceSC.toString())
     expect(Number(afterbalanceSC)).to.equal(Number(0));
 
-    // sellerBalance = await ethers.provider.getBalance(Seller.address);
+  });
+
+  //Require FIATCOIN_TRANSFERED
+  it("should refund refundMakerNativeCoin Require FIATCOIN_TRANSFERED", async function () {
+    let PaydeceEscrow, paydeceEscrow;
+    let USDT, usdt;
+
+    PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
+    paydeceEscrow = await PaydeceEscrow.deploy();
+    await paydeceEscrow.deployed();
+
+    // Deploy USDT
+    USDT = await ethers.getContractFactory("USDTToken");
+    usdt = await USDT.deploy();
+    await usdt.deployed();
+
+    const [owner, Seller, Buyer, other] = await ethers.getSigners();
+    // console.log(owner.address)
+
+    let sellerBalance = await ethers.provider.getBalance(Seller.address);
     // console.log("sellerBalance:"+sellerBalance.toString())
 
-    // buyerBalance = await ethers.provider.getBalance(Buyer.address);
-    // console.log("buyerBalance:"+buyerBalance.toString())
+    //get balance sc paydece
+    const prevBalanceSC = await ethers.provider.getBalance(
+      paydeceEscrow.address
+    );
+    // console.log(prevBalance.toString())
 
-    // 1 is expected because 1% of 100
-    // expect(Number(afterbalanceSC)).to.equal(Number(ethers.utils.parseUnits("1", "ether")));
+    //Set Fee to 1%
+    await paydeceEscrow.connect(owner).setFeeTaker("1000");
 
-    // expect(Number(buyerBalance)).to.be.at.least(Number(ethers.utils.parseUnits("99", "ether")));
+    //call createEscrow
+    const ammount = ethers.utils.parseUnits("100", "ether"); //1 ether
+
+    await paydeceEscrow
+      .connect(Buyer)
+      .createEscrowNativeCoin("2", Seller.address, ammount, false, false, {
+        value: ammount,
+      });
+
+    //call releaseEscrow Error
+    await expect(
+      paydeceEscrow.connect(other).refundMakerNativeCoin("2")
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+
+    await paydeceEscrow.connect(Seller).setMarkAsPaid("2");
+    
+    await paydeceEscrow.connect(owner).refundMakerNativeCoin("2")
+    
+    // //call releaseEscrow
+    // await paydeceEscrow.connect(owner).refundMakerNativeCoin("2");
+    // console.log("Paso2");
+    // await expect(
+    //   paydeceEscrow.connect(owner).refundMakerNativeCoin("2")
+    // ).to.be.revertedWith("Refund not approved");
+    // console.log("Paso3");
+    // //get balance sc paydece
+    // const afterbalanceSC = await ethers.provider.getBalance(
+    //   paydeceEscrow.address
+    // );
+    // // console.log("----------afterbalanceSC:"+afterbalanceSC.toString())
+    // expect(Number(afterbalanceSC)).to.equal(Number(0));
+
   });
 
   it("should refund to CancelMakerNative", async function () {
@@ -1994,7 +2115,7 @@ describe("Contract Ownership", () => {
 
     //call getState
     const _state = await paydeceEscrow.getState("1");
-    // console.log("_state:" + _state);
+    //  console.log("_state:" + _state);
     const _FundedState = 2;
     expect(_state).to.equal(_FundedState);
   });
