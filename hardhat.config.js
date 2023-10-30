@@ -74,13 +74,32 @@ module.exports = {
         "c03b4719a0ef66ff9323d971d14a2cb87f49b6fcc05818cf9d65118beb46fc43",
       ],
     },
+    latestnet: {
+      url: "https://rpc.testnet.lachain.network",
+      chainId: 418,
+      gasPrice: 20000000000,
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
+    },
   },
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
     //apiKey: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K", //BSC Binance
-    apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH
+    //apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH
     //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
+    apiKey: {
+      latestnet: "abc"
+    },
+    customChains: [
+      {
+        network: "latestnet",
+        chainId: 418,
+        urls: {
+          apiURL: "https://testexplorer.lachain.network/api",
+          browserURL: "https://testexplorer.lachain.network"
+        }
+      }
+    ]
   },
   solidity: "0.8.19",
 };

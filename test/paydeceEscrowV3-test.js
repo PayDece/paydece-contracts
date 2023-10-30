@@ -369,7 +369,7 @@ describe("PaydeceEscrow StableCoin", function () {
       .connect(Buyer)
       .createEscrow("1", Seller.address, ammount, usdt.address, false, false);
 
-    
+    // console.log("Paso1");
     // const _feeAvaible = await paydeceEscrow.connect(Buyer).feesAvailable(usdt.address);  
     // console.log("_feeAvaible",_feeAvaible.toString());
     
@@ -380,11 +380,12 @@ describe("PaydeceEscrow StableCoin", function () {
 
     //call refundBuyer
     await paydeceEscrow.connect(owner).refundMaker("1");
+
   //call refundBuyer
   await expect(
     paydeceEscrow.connect(owner).refundMaker("1")
   ).to.be.revertedWith("Refund not approved");    
-    
+  
     //get Balance
     const scBalance = await usdt.balanceOf(paydeceEscrow.address);
     // console.log("==========scBalance:" + scBalance);

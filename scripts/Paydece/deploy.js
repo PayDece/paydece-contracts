@@ -1,7 +1,7 @@
 // scripts/deploy.js
 async function main() {
   const accounts = await ethers.getSigners();
-  console.log(await accounts[2].address);
+  console.log(await accounts[3].address);
 
   const MyContract = await hre.ethers.getContractFactory(
     "PaydeceEscrow",

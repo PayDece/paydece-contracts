@@ -167,6 +167,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         if (!_maker_premium) {
             _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
                 (100 * 10 ** _decimals)) / 1000;
+
+            // Add fee
+            feesAvailable[_currency] += _amountFeeMaker;    
         }        
 
         //Transfer USDT to contract
@@ -175,9 +178,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             address(this),
             (_value + _amountFeeMaker)
         );
-
-        // Add fee
-        feesAvailable[_currency] += _amountFeeMaker;
 
         escrows[_orderId] = Escrow(
             payable(msg.sender),
@@ -230,7 +230,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
                 (100 * 10 ** _decimals)) / 1000;
 
             //Add fee
-            feesAvailableNativeCoin += _amountFeeMaker;
+            feesAvailableNativeCoin += _amountFeeMaker;    
         }
 
         //Verification was added for the user to send the exact amount of native tokens to escrow.
@@ -439,6 +439,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         //get Amount Fee Maker
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
 
+        //update frees
+        feesAvailable[escrows[_orderId].currency] -= _amountFeeMaker;
+
         //Transfer to maker
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].maker,
@@ -472,6 +475,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         //get Amount Fee Maker
         uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
+
+        //update fee
+        feesAvailableNativeCoin -= _amountFeeMaker; 
 
         //Transfer call
         (bool sent, ) = payable(address(escrows[_orderId].maker)).call{
@@ -532,13 +538,13 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeTaker
-        uint256 _amountFeeTaker = getAmountFeeMaker(_orderId, true);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
 
         //update fee amount
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeTaker;
+        feesAvailableNativeCoin -= _amountFeeMaker;
 
         (bool sent, ) = escrows[_orderId].maker.call{
-            value: escrows[_orderId].value + _amountFeeTaker
+            value: escrows[_orderId].value + _amountFeeMaker
         }("");
         require(sent, "Transfer failed.");
 
@@ -609,12 +615,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId);
+        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId, false);
 
-        feesAvailable[escrows[_orderId].currency] +=
-            _amountFeeMaker +
-            _amountFeeTaker;
+        feesAvailable[escrows[_orderId].currency] += _amountFeeTaker;
 
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.COMPLETED;
@@ -638,26 +641,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Native Coin has not been deposited"
         );
 
-        uint8 _decimals = 18; //Wei
-
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = 0;
-        // Premium Validations
-        if (!escrows[_orderId].maker_premium) {
-            _amountFeeMaker = ((escrows[_orderId].value *
-                (escrows[_orderId].makerfee * 10 ** _decimals)) /
-                (100 * 10 ** _decimals)) / 1000;
-        }
-
         uint256 _amountFeeTaker = 0;
         if (!escrows[_orderId].taker_premium) {
-            _amountFeeTaker = ((escrows[_orderId].value *
-                (escrows[_orderId].takerfee * 10 ** _decimals)) /
-                (100 * 10 ** _decimals)) / 1000;
+            _amountFeeTaker = getAmountFeeTaker(_orderId, true);    
         }
 
         //Record the fees obtained for Paydece
-        feesAvailableNativeCoin += _amountFeeMaker + _amountFeeTaker;
+        feesAvailableNativeCoin += _amountFeeTaker;
 
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.COMPLETED;
@@ -677,13 +668,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @return  uint256  .
      */
     function getAmountFeeTaker(
-        uint256 _orderId
+        uint256 _orderId,
+        bool _native
     ) private view returns (uint256) {
         //get decimal of stable
         uint8 _decimals = 18;
         uint256 _amountFeeTaker = 0;
 
+        if (_native == false) {
         _decimals = escrows[_orderId].currency.decimals();
+        }
 
         // Validations Premium
         if (!escrows[_orderId].taker_premium) {
