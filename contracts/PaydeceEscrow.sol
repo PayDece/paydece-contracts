@@ -360,7 +360,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         feesAvailable[_currency] -= _amount;
 
-        _currency.safeTransfer(owner(), _currency.balanceOf(address(this)));
+        _currency.safeTransfer(owner(), _amount);
     }
 
     /**
@@ -377,7 +377,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         feesAvailableNativeCoin -= _amount;
 
         //Transfer
-        (bool sent, ) = payable(msg.sender).call{value: address(this).balance}("");
+        (bool sent, ) = payable(msg.sender).call{value: _amount}("");
         require(sent, "Transfer failed.");
     }
 
