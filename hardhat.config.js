@@ -80,6 +80,11 @@ module.exports = {
       gasPrice: 20000000000,
       accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
+    lachain: {
+      url: "https://rpc1.mainnet.lachain.network",
+      chainId: 274,
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
+    },
   },
   etherscan: {
     // Your API key for Etherscan
@@ -88,15 +93,23 @@ module.exports = {
     //apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH
     //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
     apiKey: {
-      latestnet: "abc"
+      lachain: "abc"
     },
     customChains: [
+      // {
+      //   network: "latestnet",
+      //   chainId: 418,
+      //   urls: {
+      //     apiURL: "https://testexplorer.lachain.network/api",
+      //     browserURL: "https://testexplorer.lachain.network"
+      //   }
+      // },
       {
-        network: "latestnet",
-        chainId: 418,
+        network: "lachain",
+        chainId: 274,
         urls: {
-          apiURL: "https://testexplorer.lachain.network/api",
-          browserURL: "https://testexplorer.lachain.network"
+          apiURL: "https://explorer.lachain.network/api",
+          browserURL: "https://explorer.lachain.network"
         }
       }
     ]
