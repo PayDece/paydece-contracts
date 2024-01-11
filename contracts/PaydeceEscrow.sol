@@ -159,8 +159,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         require(_value > 0, "The parameter value cannot be zero");
 
-        uint8 _decimals = _currency.decimals();
-
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = _calculateFee(_value, feeMaker, _maker_premium);
         feesAvailable[_currency] += _amountFeeMaker;         
@@ -212,8 +210,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(msg.sender != _taker, "Taker cannot be the same as maker");
 
         require(_value > 0, "The parameter value cannot be zero");
-
-        uint8 _decimals = 18;
 
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeMaker = _calculateFee(_value, feeMaker, _maker_premium);
@@ -682,7 +678,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param premium The premium status (`true` for premium, `false` for non-premium).
      * @return uint256 The calculated fee or zero for premium users.
      */
-    function _calculateFee(uint256 amount, uint16 fee, bool premium) private view returns (uint256) {
+    function _calculateFee(uint256 amount, uint16 fee, bool premium) private pure returns (uint256) {
         if (premium)
             return 0;
         return (amount * fee) / 100000;
