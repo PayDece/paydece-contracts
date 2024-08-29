@@ -8,8 +8,15 @@ async function main() {
     accounts[3]
   );
 
+  // const transactionReceipt = await ethers.provider.getTransactionReceipt(receipt.transactionHash);
+  // const gasUsed = transactionReceipt.gasUsed;
+  // const gasPricePaid = transactionReceipt.effectiveGasPrice;
+  // const transactionFee = gasUsed.mul(gasPricePaid);
+
   //const my_contract = await MyContract.deploy("0xbe6FDB4Bcb82Ed31914F04Fa7ac2833d5ab0228E");
   const my_contract = await MyContract.deploy();
+
+  // console.log("-----", my_contract.transactionHash);
 
   await my_contract.deployed();
 
