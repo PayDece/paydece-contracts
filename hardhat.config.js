@@ -166,6 +166,12 @@ module.exports = {
       gasPrice: 2000000000,
       accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },    
+    base_mainnet: {
+      url: `https://mainnet.base.org/`,
+      chainId: 8453,
+      gasPrice: 2000000000,
+      accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
+    },
     base_sepolia: {
       url: `https://sepolia.base.org/`,
       chainId: 84532,
@@ -239,6 +245,8 @@ module.exports = {
     apiKey: {
       linea_mainnet: LINEASCAN_API_KEY,
       polygonAmoy: process.env.POLYGONSCAN_API_KEY,
+      base_sepolia: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
+      base_mainnet: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
     },
     customChains: [
       {
@@ -263,6 +271,22 @@ module.exports = {
         urls: {
           apiURL: "https://api-amoy.polygonscan.com/api",
           browserURL: "https://amoy.polygonscan.com",
+        },
+      },
+      {
+        network: "base_sepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api",
+          browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "base_mainnet",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org",
         },
       },
     ],
