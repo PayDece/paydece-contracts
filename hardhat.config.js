@@ -206,7 +206,7 @@ module.exports = {
     //       browserURL: "https://explorer.lachain.network"
     //     }
     //   }
-    // ]
+    // ],
     // apiKey: {
     //   snowtrace: "snowtrace", // apiKey is not required, just set a placeholder
     // },
@@ -247,8 +247,17 @@ module.exports = {
       polygonAmoy: process.env.POLYGONSCAN_API_KEY,
       base_sepolia: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
       base_mainnet: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
+      lachain: "abc",
     },
     customChains: [
+      {
+        network: "lachain",
+        chainId: 274,
+        urls: {
+          apiURL: "https://explorer.lachain.network/api",
+          browserURL: "https://explorer.lachain.network"
+        }
+      },
       {
         network: "linea_testnet",
         chainId: 59140,
