@@ -159,18 +159,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         require(_value > 0, "The parameter value cannot be zero");
 
-        uint8 _decimals = _currency.decimals();
-
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = 0;
-        
-        if (!_maker_premium) {
-            _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
-                (100 * 10 ** _decimals)) / 1000;
-
-            // Add fee
-            feesAvailable[_currency] += _amountFeeMaker;    
-        }        
+        uint256 _amountFeeMaker = _calculateFee(_value, feeMaker, _maker_premium);
+        feesAvailable[_currency] += _amountFeeMaker;         
 
         //Transfer USDT to contract
         _currency.safeTransferFrom(
@@ -220,18 +211,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         require(_value > 0, "The parameter value cannot be zero");
 
-        uint8 _decimals = 18;
-
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = 0;
-
-        if (!_maker_premium) {
-            _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
-                (100 * 10 ** _decimals)) / 1000;
-
-            //Add fee
-            feesAvailableNativeCoin += _amountFeeMaker;    
-        }
+        uint256 _amountFeeMaker = _calculateFee(_value, feeMaker, _maker_premium);
+        feesAvailableNativeCoin += _amountFeeMaker; 
 
         //Verification was added for the user to send the exact amount of native tokens to escrow.
         require((_value + _amountFeeMaker) == msg.value, "Incorrect amount");
@@ -301,7 +283,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         address _maker = escrows[_orderId].maker;
         IERC20 _currency = escrows[_orderId].currency;
 
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);
 
         // write as refun, in case transfer fails
         escrows[_orderId].status = EscrowStatus.REFUND;
@@ -330,7 +312,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 _value = escrows[_orderId].value;
         address _maker = escrows[_orderId].maker;
 
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);
 
         // write as refun, in case transfer fails
         escrows[_orderId].status = EscrowStatus.REFUND;
@@ -437,7 +419,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
 
         //get Amount Fee Maker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);
 
         //update frees
         feesAvailable[escrows[_orderId].currency] -= _amountFeeMaker;
@@ -474,7 +456,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
 
         //get Amount Fee Maker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);
 
         //update fee
         feesAvailableNativeCoin -= _amountFeeMaker; 
@@ -506,7 +488,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeMaker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,false);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);
 
         //update fee amount
         feesAvailable[escrows[_orderId].currency] -= _amountFeeMaker;
@@ -538,7 +520,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
 
         //get amountFeeTaker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
+        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId);
 
         //update fee amount
         feesAvailableNativeCoin -= _amountFeeMaker;
@@ -615,7 +597,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId, false);
+        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId);
 
         feesAvailable[escrows[_orderId].currency] += _amountFeeTaker;
 
@@ -644,7 +626,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeTaker = 0;
         if (!escrows[_orderId].taker_premium) {
-            _amountFeeTaker = getAmountFeeTaker(_orderId, true);    
+            _amountFeeTaker = getAmountFeeTaker(_orderId);    
         }
 
         //Record the fees obtained for Paydece
@@ -663,62 +645,43 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice  Get Amount Fee Taker
-     * @param   _orderId  .
-     * @return  uint256  .
+     * @dev Private function to calculate the fee taker based on the given order id.
+     * @param _orderId The order id.
+     * @return uint256 The calculated fee or zero for premium takers.
      */
-    function getAmountFeeTaker(
-        uint256 _orderId,
-        bool _native
-    ) private view returns (uint256) {
-        //get decimal of stable
-        uint8 _decimals = 18;
-        uint256 _amountFeeTaker = 0;
+    function getAmountFeeTaker(uint256 _orderId) private view returns (uint256) {
+        return _calculateFee(
+            escrows[_orderId].value, 
+            escrows[_orderId].takerfee,
+            escrows[_orderId].taker_premium
+            );
+    }
 
-        if (_native == false) {
-        _decimals = escrows[_orderId].currency.decimals();
-        }
-
-        // Validations Premium
-        if (!escrows[_orderId].taker_premium) {
-            //get amountFeeTaker
-            _amountFeeTaker = ((escrows[_orderId].value *
-                (escrows[_orderId].takerfee * 10 ** _decimals)) /
-                (100 * 10 ** _decimals)) / 1000;
-        }
-
-        return _amountFeeTaker;
+    
+    /**
+     * @dev Private function to calculate the fee maker based on the given order id.
+     * @param _orderId The order id.
+     * @return uint256 The calculated fee or zero for premium makers.
+     */
+    function getAmountFeeMaker(uint256 _orderId) private view returns (uint256) {
+        return _calculateFee(
+            escrows[_orderId].value, 
+            escrows[_orderId].makerfee,
+            escrows[_orderId].maker_premium
+            );
     }
 
     /**
-     * @notice  Get Amount Fee Maker
-     * @param   _orderId  .
-     * @param   _native  .
-     * @return  uint256  .
+     * @dev Private function to calculate the fee based on the given amount and the given fee percentage.
+     * @param amount The total payment amount.
+     * @param fee The fee percentage.
+     * @param premium The premium status (`true` for premium, `false` for non-premium).
+     * @return uint256 The calculated fee or zero for premium users.
      */
-    function getAmountFeeMaker(
-        uint256 _orderId,
-        bool _native
-    ) private view returns (uint256) {
-        //get decimal of stable
-        uint8 _decimals = 18;
-        uint256 _amountFeeMaker = 0;
-
-        if (_native == false) {
-            _decimals = escrows[_orderId].currency.decimals();
-        }
-
-        // Validations Premium
-        if (!escrows[_orderId].maker_premium) {
-            //get amountFeeTaker
-            _amountFeeMaker =
-                ((escrows[_orderId].value *
-                    (escrows[_orderId].makerfee * 10 ** _decimals)) /
-                    (100 * 10 ** _decimals)) /
-                1000;
-        }
-
-        return _amountFeeMaker;
+    function _calculateFee(uint256 amount, uint16 fee, bool premium) private pure returns (uint256) {
+        if (premium)
+            return 0;
+        return (amount * fee) / 100000;
     }
     // ================== End Private functions ==================
 }
