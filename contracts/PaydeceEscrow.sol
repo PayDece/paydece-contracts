@@ -15,6 +15,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     uint256 public feesAvailableNativeCoin;
     uint256 public timeProcess; //Time they have to complete the transaction
 
+    mapping(address => uint256) private _nonces;
+    bytes32 public constant META_TRANSACTION_TYPEHASH = 
+        keccak256("MetaTransaction(uint256 nonce,address from,bytes functionSignature)");
+    bytes32 public DOMAIN_SEPARATOR;
+
     using SafeERC20 for IERC20;
     mapping(uint => Escrow) public escrows;
     mapping(address => bool) private whitelistedStablesAddresses;
@@ -80,10 +85,67 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Only Taker can call this"
         );
         _;
-    }
+    }    
 
     constructor() {
         timeProcess = 45 * 60; //45mi
+
+        //Gasless
+        string memory name = "PaydeceEscrow";
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes(name)),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(this)
+            )
+        );
+    }
+
+    function executeMetaTransaction(
+        address userAddress,
+        bytes memory functionSignature,
+        bytes32 sigR,
+        bytes32 sigS,
+        uint8 sigV
+    ) public returns (bytes memory) {
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                DOMAIN_SEPARATOR,
+                keccak256(abi.encode(
+                    META_TRANSACTION_TYPEHASH,
+                    _nonces[userAddress],
+                    userAddress,
+                    keccak256(functionSignature)
+                ))
+            )
+        );
+
+        //address signer = ecrecover(digest, sigV, sigR, sigS);
+        //require(signer != address(0), "Invalid signature");
+        //require(signer == userAddress, "Signer and userAddress do not match");
+
+        //_nonces[userAddress]++;
+
+        (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
+        require(success, "Function call failed");
+        
+        return returnData;
+    }
+
+    function _msgSender() internal view override returns (address sender) {
+        if(msg.sender == address(this)) {
+            bytes memory array = msg.data;
+            uint256 index = msg.data.length;
+            assembly {
+                sender := and(mload(add(array, index)), 0xffffffffffffffffffffffffffffffffffffffff)
+            }
+        } else {
+            sender = msg.sender;
+        }
+        return sender;
     }
 
     // ================== Begin External functions ==================
