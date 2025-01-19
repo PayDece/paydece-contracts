@@ -10,8 +10,8 @@ import "./Ownable.sol";
 
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
     // 0.1 is 100 because it is multiplied by a thousand => 0.1 X 1000 = 100
-    uint16 public feeTaker;
-    uint16 public feeMaker;
+    uint16 public feeReceiver;
+    uint16 public feeSender;
     uint256 public feesAvailableNativeCoin;
     uint256 public timeProcess; //Time they have to complete the transaction
 
@@ -26,19 +26,22 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         CRYPTOS_IN_CUSTODY, // 2,
         FIATCOIN_TRANSFERED, // 3,
         COMPLETED, // 4,
+        UNKNOWN_5,
+        UNKNOWN_6,
         REFUND, // 7,
-        CANCEL_MAKER, //9
-        CANCEL_TAKER //10
+        UNKNOWN_8,
+        CANCEL_SENDER, //9
+        CANCEL_RECEIVER //10
     }
 
     struct Escrow {
-        address payable maker; //Maker
-        address payable taker; //Taker
-        bool maker_premium;
-        bool taker_premium;
+        address payable sender; //Sender
+        address payable receiver; //Receiver
+        bool sender_premium;
+        bool receiver_premium;
         uint256 value; // Purchase amount
-        uint16 takerfee; //Fee Taker
-        uint16 makerfee; //Fee Maker
+        uint16 receiverfee; //Fee Receiver
+        uint16 senderfee; //Fee Sender
         IERC20 currency; //Money
         EscrowStatus status; //Status
         uint256 created;
@@ -46,73 +49,75 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     event EscrowDeposit(uint indexed orderId, Escrow escrow);
     event EscrowComplete(uint indexed orderId, Escrow escrow);
-    event EscrowCancelMaker(uint indexed orderId, Escrow escrow);
-    event EscrowCancelTaker(uint indexed orderId, Escrow escrow);
+    event EscrowCancelSender(uint indexed orderId, Escrow escrow);
+    event EscrowCancelReceiver(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaidOwner(uint indexed orderId, Escrow escrow);
-    event EscrowRefundMaker(uint indexed orderId, Escrow escrow);
-    event EscrowRefundMakerNativeCoin(uint indexed orderId, Escrow escrow);
-    event setFeeMakerEvent(uint16 feeMaker);
-    event setFeeTakerEvent(uint16 feeMaker);
+    event EscrowRefundSender(uint indexed orderId, Escrow escrow);
+    event EscrowRefundSenderNativeCoin(uint indexed orderId, Escrow escrow);
     event setTimeProcessEvent(uint256 timeProcess);
     event addStablesAddressesEvent(address addressStable);
     event delStablesAddressesEvent(address addressStable);
+    event setFeeSenderEvent(uint16 feeSender);
+    event setFeeReceiverEvent(uint16 feeReceiver);
 
     /**
-     * @notice  modifier only the maker
+     * @notice  modifier only the Sender
      * @param   _orderId  .
      */
-    modifier onlyMaker(uint _orderId) {
+    modifier onlySender(uint _orderId) {
         require(
-            msg.sender == escrows[_orderId].maker,
-            "Only Maker can call this"
+            msg.sender == escrows[_orderId].sender,
+            "Only Sender can call this"
         );
         _;
     }
 
     /**
-     * @notice  modifier only the taker
+     * @notice  modifier only the Receiver
      * @param   _orderId  .
      */
-    modifier onlyTaker(uint _orderId) {
+    modifier onlyReceiver(uint _orderId) {
         require(
-            msg.sender == escrows[_orderId].taker,
-            "Only Taker can call this"
+            msg.sender == escrows[_orderId].receiver,
+            "Only Receiver can call this"
         );
         _;
     }
 
     constructor() {
         timeProcess = 45 * 60; //45mi
+        feeReceiver = 500; //0.5% fix fee
+        feeSender = 500; //0.5% fix fee
     }
 
-    // ================== Begin External functions ==================
+    // ================== Begin External functions ==================   
     /**
-     * @notice  Set Fee Taker
-     * @param   _feeTaker  .
+     * @notice  Set Fee Receiver
+     * @param   _feeReceiver  .
      */
-    function setFeeTaker(uint16 _feeTaker) external onlyOwner {
+    function setFeeReceiver(uint16 _feeReceiver) external onlyOwner() {
         require(
-            _feeTaker >= 0 && _feeTaker <= (1 * 1000),
-            "The fee can be from 0% to 1%"
+            _feeReceiver >= 0 && _feeReceiver <= 500,
+            "The fee can be from 0% to 0.5%"
         );
-        feeTaker = _feeTaker;
+        feeReceiver = _feeReceiver;
 
-        emit setFeeTakerEvent(_feeTaker);
+        emit setFeeReceiverEvent(_feeReceiver);
     }
 
     /**
-     * @notice  Set Fee Maker
-     * @param   _feeMaker  .
+     * @notice  Set Fee Sender
+     * @param   _feeSender  .
      */
-    function setFeeMaker(uint16 _feeMaker) external onlyOwner {
+    function setFeeSender(uint16 _feeSender) external onlyOwner() {
         require(
-            _feeMaker >= 0 && _feeMaker <= (1 * 1000),
-            "The fee can be from 0% to 1%"
+            _feeSender >= 0 && _feeSender <= 500,
+            "The fee can be from 0% to 0.5%"
         );
-        feeMaker = _feeMaker;
+        feeSender = _feeSender;
 
-        emit setFeeMakerEvent(_feeMaker);
+        emit setFeeSenderEvent(_feeSender);
     }
 
     /**
@@ -129,21 +134,21 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /**
      * @notice  Create Escrow
      * @param   _orderId  .
-     * @param   _taker  .
+     * @param   _receiver  .
      * @param   _value  .
      * @param   _currency  .
-     * @param   _maker_premium  .
-     * @param   _taker_premium  .
+     * @param   _sender_premium  .
+     * @param   _receiver_premium  .
      */
     function createEscrow(
         uint _orderId,
-        address payable _taker,
+        address payable _receiver,
         uint256 _value,
         IERC20 _currency,
-        bool _maker_premium,
-        bool _taker_premium
+        bool _sender_premium,
+        bool _receiver_premium
     ) external virtual {
-        require(_taker != address(0), "The address taker cannot be empty");
+        require(_receiver != address(0), "The address receiver cannot be empty");
 
         require(
             escrows[_orderId].status == EscrowStatus.Unknown,
@@ -155,38 +160,38 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Address Stable to be whitelisted"
         );
 
-        require(msg.sender != _taker, "Taker cannot be the same as maker");
+        require(msg.sender != _receiver, "Receiver cannot be the same as sender");
 
         require(_value > 0, "The parameter value cannot be zero");
 
         uint8 _decimals = _currency.decimals();
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = 0;
+        uint256 _amountFeeSender = 0;
         
-        if (!_maker_premium) {
-            _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
+        if (!_sender_premium) {
+            _amountFeeSender = ((_value * (feeSender * 10 ** _decimals)) /
                 (100 * 10 ** _decimals)) / 1000;
 
             // Add fee
-            feesAvailable[_currency] += _amountFeeMaker;    
+            feesAvailable[_currency] += _amountFeeSender;    
         }        
 
         //Transfer USDT to contract
         _currency.safeTransferFrom(
             msg.sender,
             address(this),
-            (_value + _amountFeeMaker)
+            (_value + _amountFeeSender)
         );
 
         escrows[_orderId] = Escrow(
             payable(msg.sender),
-            _taker,
-            _maker_premium,
-            _taker_premium,
+            _receiver,
+            _sender_premium,
+            _receiver_premium,
             _value,
-            feeTaker,
-            feeMaker,
+            feeReceiver,
+            feeSender,
             _currency,
             EscrowStatus.CRYPTOS_IN_CUSTODY,
             block.timestamp
@@ -198,52 +203,52 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /**
      * @notice  Create Escrow Native Coin
      * @param   _orderId  .
-     * @param   _taker  .
+     * @param   _receiver  .
      * @param   _value  .
-     * @param   _maker_premium  .
-     * @param   _taker_premium  .
+     * @param   _sender_premium  .
+     * @param   _receiver_premium  .
      */
     function createEscrowNativeCoin(
         uint _orderId,
-        address payable _taker,
+        address payable _receiver,
         uint256 _value,
-        bool _maker_premium,
-        bool _taker_premium
+        bool _sender_premium,
+        bool _receiver_premium
     ) external payable virtual {
         require(
             escrows[_orderId].status == EscrowStatus.Unknown,
             "Escrow already exists"
         );
-        require(_taker != address(0), "The address taker cannot be empty");
+        require(_receiver != address(0), "The address receiver cannot be empty");
 
-        require(msg.sender != _taker, "Taker cannot be the same as maker");
+        require(msg.sender != _receiver, "Receiver cannot be the same as sender");
 
         require(_value > 0, "The parameter value cannot be zero");
 
         uint8 _decimals = 18;
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeMaker = 0;
+        uint256 _amountFeeSender = 0;
 
-        if (!_maker_premium) {
-            _amountFeeMaker = ((_value * (feeMaker * 10 ** _decimals)) /
+        if (!_sender_premium) {
+            _amountFeeSender = ((_value * (feeSender * 10 ** _decimals)) /
                 (100 * 10 ** _decimals)) / 1000;
 
             //Add fee
-            feesAvailableNativeCoin += _amountFeeMaker;    
+            feesAvailableNativeCoin += _amountFeeSender;    
         }
 
         //Verification was added for the user to send the exact amount of native tokens to escrow.
-        require((_value + _amountFeeMaker) == msg.value, "Incorrect amount");
+        require((_value + _amountFeeSender) == msg.value, "Incorrect amount");
 
         escrows[_orderId] = Escrow(
             payable(msg.sender),
-            _taker,
-            _maker_premium,
-            _taker_premium,
+            _receiver,
+            _sender_premium,
+            _receiver_premium,
             _value,
-            feeTaker,
-            feeMaker,
+            feeReceiver,
+            feeSender,
             IERC20(address(0)),
             EscrowStatus.CRYPTOS_IN_CUSTODY,
             block.timestamp
@@ -272,9 +277,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @notice  Release Escrow
      * @param   _orderId  .
      */
-    function releaseEscrow(uint _orderId) external onlyMaker(_orderId) {
+    function releaseEscrow(uint _orderId) external onlySender(_orderId) {
         _releaseEscrow(_orderId);
     }
+    
 
     /**
      * @notice  Release Escrow Native Coin
@@ -282,15 +288,15 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      */
     function releaseEscrowNativeCoin(
         uint _orderId
-    ) external onlyMaker(_orderId) {
+    ) external onlySender(_orderId) {
         _releaseEscrowNativeCoin(_orderId);
     }
 
     /**
-     * @notice  release funds to the maker - cancelled contract
+     * @notice  release funds to the Sender - cancelled contract
      * @param   _orderId  .
      */
-    function refundMaker(uint _orderId) external nonReentrant onlyOwner {
+    function refundSender(uint _orderId) external nonReentrant onlyOwner {
         require( 
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY || 
             escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
@@ -298,27 +304,27 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         uint256 _value = escrows[_orderId].value;
-        address _maker = escrows[_orderId].maker;
+        address _sender = escrows[_orderId].sender;
         IERC20 _currency = escrows[_orderId].currency;
 
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
+        uint256 _amountFeeSender = getAmountFeeSender(_orderId, false);
 
         // write as refun, in case transfer fails
         escrows[_orderId].status = EscrowStatus.REFUND;
 
         //update fee
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeMaker;
+        feesAvailable[escrows[_orderId].currency] -= _amountFeeSender;
 
-        _currency.safeTransfer(_maker, _value + _amountFeeMaker);
+        _currency.safeTransfer(_sender, _value + _amountFeeSender);
 
-        emit EscrowRefundMaker(_orderId, escrows[_orderId]);
+        emit EscrowRefundSender(_orderId, escrows[_orderId]);
     }
 
     /**
-     * @notice  Refund Maker Native Coin
+     * @notice  Refund Sender Native Coin
      * @param   _orderId  .
      */
-    function refundMakerNativeCoin(
+    function refundSenderNativeCoin(
         uint _orderId
     ) external nonReentrant onlyOwner {
         require(
@@ -328,22 +334,22 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         uint256 _value = escrows[_orderId].value;
-        address _maker = escrows[_orderId].maker;
+        address _sender = escrows[_orderId].sender;
 
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
+        uint256 _amountFeeSender = getAmountFeeSender(_orderId, true);
 
         // write as refun, in case transfer fails
         escrows[_orderId].status = EscrowStatus.REFUND;
 
-        feesAvailableNativeCoin -= _amountFeeMaker;
+        feesAvailableNativeCoin -= _amountFeeSender;
 
         //Transfer call
-        (bool sent, ) = payable(address(_maker)).call{
-            value: _value + _amountFeeMaker
+        (bool sent, ) = payable(address(_sender)).call{
+            value: _value + _amountFeeSender
         }("");
         require(sent, "Transfer failed.");
 
-        emit EscrowRefundMakerNativeCoin(_orderId, escrows[_orderId]);
+        emit EscrowRefundSenderNativeCoin(_orderId, escrows[_orderId]);
     }
 
     /**
@@ -416,12 +422,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice  Cancel Maker
+     * @notice  Cancel Sender
      * @param   _orderId  .
      */
-    function cancelMaker(
+    function cancelSender(
         uint256 _orderId
-    ) external nonReentrant onlyMaker(_orderId) {
+    ) external nonReentrant onlySender(_orderId) {
         // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -434,31 +440,31 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(_timeDiff > timeProcess, "Time is still running out.");
 
         // Status change
-        escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
+        escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
 
-        //get Amount Fee Maker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, false);
+        //get Amount Fee Sender
+        uint256 _amountFeeSender = getAmountFeeSender(_orderId, false);
 
         //update frees
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeMaker;
+        feesAvailable[escrows[_orderId].currency] -= _amountFeeSender;
 
-        //Transfer to maker
+        //Transfer to Sender
         escrows[_orderId].currency.safeTransfer(
-            escrows[_orderId].maker,
-            escrows[_orderId].value + _amountFeeMaker
+            escrows[_orderId].sender,
+            escrows[_orderId].value + _amountFeeSender
         );
 
         // emit event
-        emit EscrowCancelMaker(_orderId, escrows[_orderId]);
+        emit EscrowCancelSender(_orderId, escrows[_orderId]);
     }
 
     /**
-     * @notice  Cancel Maker Native
+     * @notice  Cancel Sender Native
      * @param   _orderId  .
      */
-    function cancelMakerNative(
+    function cancelSenderNative(
         uint256 _orderId
-    ) external nonReentrant onlyMaker(_orderId) {
+    ) external nonReentrant onlySender(_orderId) {
         // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -471,31 +477,31 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(_timeDiff > timeProcess, "Time is still running out.");
 
         // Status change
-        escrows[_orderId].status = EscrowStatus.CANCEL_MAKER;
+        escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
 
-        //get Amount Fee Maker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
+        //get Amount Fee Sender
+        uint256 _amountFeeSender = getAmountFeeSender(_orderId, true);
 
         //update fee
-        feesAvailableNativeCoin -= _amountFeeMaker; 
+        feesAvailableNativeCoin -= _amountFeeSender; 
 
         //Transfer call
-        (bool sent, ) = payable(address(escrows[_orderId].maker)).call{
-            value: (escrows[_orderId].value + _amountFeeMaker)
+        (bool sent, ) = payable(address(escrows[_orderId].sender)).call{
+            value: (escrows[_orderId].value + _amountFeeSender)
         }("");
         require(sent, "Transfer failed.");
 
         // emit event
-        emit EscrowCancelMaker(_orderId, escrows[_orderId]);
+        emit EscrowCancelSender(_orderId, escrows[_orderId]);
     }
 
     /**
-     * @notice  Cancel Taker
+     * @notice  Cancel Receiver
      * @param   _orderId  .
      */
-    function cancelTaker(
+    function cancelReceiver(
         uint256 _orderId
-    ) external nonReentrant onlyTaker(_orderId) {
+    ) external nonReentrant onlyReceiver(_orderId) {
         // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -503,31 +509,31 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         // Status change
-        escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
+        escrows[_orderId].status = EscrowStatus.CANCEL_RECEIVER;
 
-        //get amountFeeMaker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId,false);
+        //get amountFeeSender
+        uint256 _amountFeeSender = getAmountFeeSender(_orderId,false);
 
         //update fee amount
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeMaker;
+        feesAvailable[escrows[_orderId].currency] -= _amountFeeSender;
 
-        //Transfer to Taker
+        //Transfer to Receiver
         escrows[_orderId].currency.safeTransfer(
-            escrows[_orderId].maker,
-            (escrows[_orderId].value + _amountFeeMaker)
+            escrows[_orderId].sender,
+            (escrows[_orderId].value + _amountFeeSender)
         );
 
         // emit event
-        emit EscrowCancelTaker(_orderId, escrows[_orderId]);
+        emit EscrowCancelReceiver(_orderId, escrows[_orderId]);
     }
 
     /**
-     * @notice  Cancel Taker Native
+     * @notice  Cancel Receiver Native
      * @param   _orderId  .
      */
-    function cancelTakerNative(
+    function cancelReceiverNative(
         uint256 _orderId
-    ) external nonReentrant onlyTaker(_orderId) {
+    ) external nonReentrant onlyReceiver(_orderId) {
         // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -535,28 +541,28 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         // Status change
-        escrows[_orderId].status = EscrowStatus.CANCEL_TAKER;
+        escrows[_orderId].status = EscrowStatus.CANCEL_RECEIVER;
 
-        //get amountFeeTaker
-        uint256 _amountFeeMaker = getAmountFeeMaker(_orderId, true);
+        //get amountFeeReceiver
+        uint256 _amountFeeSender = getAmountFeeSender(_orderId, true);
 
         //update fee amount
-        feesAvailableNativeCoin -= _amountFeeMaker;
+        feesAvailableNativeCoin -= _amountFeeSender;
 
-        (bool sent, ) = escrows[_orderId].maker.call{
-            value: escrows[_orderId].value + _amountFeeMaker
+        (bool sent, ) = escrows[_orderId].sender.call{
+            value: escrows[_orderId].value + _amountFeeSender
         }("");
         require(sent, "Transfer failed.");
 
         // emit event
-        emit EscrowCancelTaker(_orderId, escrows[_orderId]);
+        emit EscrowCancelReceiver(_orderId, escrows[_orderId]);
     }
 
     /**
      * @notice  Set Mark As Paid
      * @param   _orderId  .
      */
-    function setMarkAsPaid(uint256 _orderId) external onlyTaker(_orderId) {
+    function setMarkAsPaid(uint256 _orderId) external onlyReceiver(_orderId) {
         // Validate the Escrow status
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
@@ -594,7 +600,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @return  string  .
      */
     function version() external pure virtual returns (string memory) {
-        return "4.2.0";
+        return "5.0";
     }
 
     // ================== End External functions that are pure ==================
@@ -615,17 +621,17 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeTaker = getAmountFeeTaker(_orderId, false);
+        uint256 _amountFeeReceiver = getAmountFeeReceiver(_orderId, false);
 
-        feesAvailable[escrows[_orderId].currency] += _amountFeeTaker;
+        feesAvailable[escrows[_orderId].currency] += _amountFeeReceiver;
 
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.COMPLETED;
 
-        //Transfer to taker Price Asset - FeeTaker
+        //Transfer to Receiver Price Asset - FeeReceiver
         escrows[_orderId].currency.safeTransfer(
-            escrows[_orderId].taker,
-            escrows[_orderId].value - _amountFeeTaker
+            escrows[_orderId].receiver,
+            escrows[_orderId].value - _amountFeeReceiver
         );
 
         emit EscrowComplete(_orderId, escrows[_orderId]);
@@ -642,20 +648,20 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
 
         //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeTaker = 0;
-        if (!escrows[_orderId].taker_premium) {
-            _amountFeeTaker = getAmountFeeTaker(_orderId, true);    
+        uint256 _amountFeeReceiver = 0;
+        if (!escrows[_orderId].receiver_premium) {
+            _amountFeeReceiver = getAmountFeeReceiver(_orderId, true);    
         }
 
         //Record the fees obtained for Paydece
-        feesAvailableNativeCoin += _amountFeeTaker;
+        feesAvailableNativeCoin += _amountFeeReceiver;
 
         // write as complete, in case transfer fails
         escrows[_orderId].status = EscrowStatus.COMPLETED;
 
-        //Transfer to taker Price Asset - FeeTaker
-        (bool sent, ) = escrows[_orderId].taker.call{
-            value: escrows[_orderId].value - _amountFeeTaker
+        //Transfer to Receiver Price Asset - FeeReceiver
+        (bool sent, ) = escrows[_orderId].receiver.call{
+            value: escrows[_orderId].value - _amountFeeReceiver
         }("");
         require(sent, "Transfer failed.");
 
@@ -663,62 +669,62 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice  Get Amount Fee Taker
+     * @notice  Get Amount Fee Receiver
      * @param   _orderId  .
      * @return  uint256  .
      */
-    function getAmountFeeTaker(
+    function getAmountFeeReceiver(
         uint256 _orderId,
         bool _native
     ) private view returns (uint256) {
         //get decimal of stable
         uint8 _decimals = 18;
-        uint256 _amountFeeTaker = 0;
+        uint256 _amountFeeReceiver = 0;
 
         if (_native == false) {
         _decimals = escrows[_orderId].currency.decimals();
         }
 
         // Validations Premium
-        if (!escrows[_orderId].taker_premium) {
-            //get amountFeeTaker
-            _amountFeeTaker = ((escrows[_orderId].value *
-                (escrows[_orderId].takerfee * 10 ** _decimals)) /
+        if (!escrows[_orderId].receiver_premium) {
+            //get amountFeeReceiver
+            _amountFeeReceiver = ((escrows[_orderId].value *
+                (escrows[_orderId].receiverfee * 10 ** _decimals)) /
                 (100 * 10 ** _decimals)) / 1000;
         }
 
-        return _amountFeeTaker;
+        return _amountFeeReceiver;
     }
 
     /**
-     * @notice  Get Amount Fee Maker
+     * @notice  Get Amount Fee Sender
      * @param   _orderId  .
      * @param   _native  .
      * @return  uint256  .
      */
-    function getAmountFeeMaker(
+    function getAmountFeeSender(
         uint256 _orderId,
         bool _native
     ) private view returns (uint256) {
         //get decimal of stable
         uint8 _decimals = 18;
-        uint256 _amountFeeMaker = 0;
+        uint256 _amountFeeSender = 0;
 
         if (_native == false) {
             _decimals = escrows[_orderId].currency.decimals();
         }
 
         // Validations Premium
-        if (!escrows[_orderId].maker_premium) {
-            //get amountFeeTaker
-            _amountFeeMaker =
+        if (!escrows[_orderId].sender_premium) {
+            //get amountFeeReceiver
+            _amountFeeSender =
                 ((escrows[_orderId].value *
-                    (escrows[_orderId].makerfee * 10 ** _decimals)) /
+                    (escrows[_orderId].senderfee * 10 ** _decimals)) /
                     (100 * 10 ** _decimals)) /
                 1000;
         }
 
-        return _amountFeeMaker;
+        return _amountFeeSender;
     }
     // ================== End Private functions ==================
 }

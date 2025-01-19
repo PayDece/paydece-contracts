@@ -318,17 +318,17 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(
-        address spender,
-        uint256 addedValue
-    ) public virtual returns (bool) {
-        _approve(
-            _msgSender(),
-            spender,
-            _allowances[_msgSender()][spender] + addedValue
-        );
-        return true;
-    }
+    // function increaseAllowance(
+    //     address spender,
+    //     uint256 addedValue
+    // ) public virtual returns (bool) {
+    //     _approve(
+    //         _msgSender(),
+    //         spender,
+    //         _allowances[_msgSender()][spender] + addedValue
+    //     );
+    //     return true;
+    // }
 
     /**
      * @dev Atomically decreases the allowance granted to `spender` by the caller.
@@ -344,21 +344,21 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(
-        address spender,
-        uint256 subtractedValue
-    ) public virtual returns (bool) {
-        uint256 currentAllowance = _allowances[_msgSender()][spender];
-        require(
-            currentAllowance >= subtractedValue,
-            "ERC20: decreased allowance below zero"
-        );
-        unchecked {
-            _approve(_msgSender(), spender, currentAllowance - subtractedValue);
-        }
+    // function decreaseAllowance(
+    //     address spender,
+    //     uint256 subtractedValue
+    // ) public virtual returns (bool) {
+    //     uint256 currentAllowance = _allowances[_msgSender()][spender];
+    //     require(
+    //         currentAllowance >= subtractedValue,
+    //         "ERC20: decreased allowance below zero"
+    //     );
+    //     unchecked {
+    //         _approve(_msgSender(), spender, currentAllowance - subtractedValue);
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     /**
      * @dev Moves `amount` of tokens from `sender` to `recipient`.
@@ -431,22 +431,22 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens.
      */
-    function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: burn from the zero address");
+    // function _burn(address account, uint256 amount) internal virtual {
+    //     require(account != address(0), "ERC20: burn from the zero address");
 
-        _beforeTokenTransfer(account, address(0), amount);
+    //     _beforeTokenTransfer(account, address(0), amount);
 
-        uint256 accountBalance = _balances[account];
-        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
-        unchecked {
-            _balances[account] = accountBalance - amount;
-        }
-        _totalSupply -= amount;
+    //     uint256 accountBalance = _balances[account];
+    //     require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+    //     unchecked {
+    //         _balances[account] = accountBalance - amount;
+    //     }
+    //     _totalSupply -= amount;
 
-        emit Transfer(account, address(0), amount);
+    //     emit Transfer(account, address(0), amount);
 
-        _afterTokenTransfer(account, address(0), amount);
-    }
+    //     _afterTokenTransfer(account, address(0), amount);
+    // }
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
@@ -525,9 +525,9 @@ abstract contract ERC20Burnable is Context, ERC20 {
      *
      * See {ERC20-_burn}.
      */
-    function burn(uint256 amount) public virtual {
-        _burn(_msgSender(), amount);
-    }
+    // function burn(uint256 amount) public virtual {
+    //     _burn(_msgSender(), amount);
+    // }
 
     /**
      * @dev Destroys `amount` tokens from `account`, deducting from the caller's
@@ -540,17 +540,17 @@ abstract contract ERC20Burnable is Context, ERC20 {
      * - the caller must have allowance for ``accounts``'s tokens of at least
      * `amount`.
      */
-    function burnFrom(address account, uint256 amount) public virtual {
-        uint256 currentAllowance = allowance(account, _msgSender());
-        require(
-            currentAllowance >= amount,
-            "ERC20: burn amount exceeds allowance"
-        );
-        unchecked {
-            _approve(account, _msgSender(), currentAllowance - amount);
-        }
-        _burn(account, amount);
-    }
+    // function burnFrom(address account, uint256 amount) public virtual {
+    //     uint256 currentAllowance = allowance(account, _msgSender());
+    //     require(
+    //         currentAllowance >= amount,
+    //         "ERC20: burn amount exceeds allowance"
+    //     );
+    //     unchecked {
+    //         _approve(account, _msgSender(), currentAllowance - amount);
+    //     }
+    //     _burn(account, amount);
+    // }
 }
 
 /**
