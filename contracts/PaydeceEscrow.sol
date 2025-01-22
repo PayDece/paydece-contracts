@@ -262,6 +262,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _orderId  .
      */
     function releaseEscrowOwner(uint _orderId) external onlyOwner {
+        require(
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
+            "Status must be FIATCOIN_TRANSFERED"
+        );
         _releaseEscrow(_orderId);
     }
 
@@ -278,6 +282,22 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _orderId  .
      */
     function releaseEscrow(uint _orderId) external onlySender(_orderId) {
+        require(
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
+            "Status must be FIATCOIN_TRANSFERED"
+        );
+        _releaseEscrow(_orderId);
+    }
+
+    /**
+     * @notice  Release Escrow
+     * @param   _orderId  .
+     */
+    function releaseEscrowSender(uint _orderId) external onlySender(_orderId) {
+        require(
+            escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
+            "Status must be CRYPTOS_IN_CUSTODY"
+        );
         _releaseEscrow(_orderId);
     }
     
@@ -615,10 +635,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _orderId  .
      */
     function _releaseEscrow(uint _orderId) private nonReentrant {
-        require(
-            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
-            "Status must be FIATCOIN_TRANSFERED"
-        );
+        
 
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeReceiver = getAmountFeeReceiver(_orderId, false);

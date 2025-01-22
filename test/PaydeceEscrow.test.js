@@ -254,6 +254,54 @@ describe("PaydeceEscrow", function () {
     });    
   });
 
+  describe("releaseEscrowSender", function () {
+    it("should release the escrow by the sender", async function () {
+      const orderId = 1;
+      const value = ethers.utils.parseEther("10");
+      const fee = value.mul(500).div(100000); // 0.5% fee
+
+      // Transfer tokens to sender
+      await token.transfer(sender.address, value.add(fee));
+
+      // Approve and create escrow
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false);
+
+      // Mark as paid by receiver
+      //await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
+
+      // Release the escrow by the sender
+      await paydeceEscrow.connect(sender).releaseEscrowSender(orderId);
+
+      const escrow = await paydeceEscrow.escrows(orderId);
+      expect(escrow.status).to.equal(EscrowStatus.COMPLETED);
+    });
+
+    it("should fail if not called by the sender", async function () {
+      const orderId = 1;
+      const value = ethers.utils.parseEther("10");
+      const fee = value.mul(500).div(100000); // 0.5% fee
+
+      // Transfer tokens to sender
+      await token.transfer(sender.address, value.add(fee));
+
+      // Approve and create escrow
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false);
+
+      // Mark as paid by receiver
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
+
+      // Attempt to release the escrow by someone other than the sender
+      await expect(paydeceEscrow.connect(receiver).releaseEscrowSender(orderId))
+        .to.be.revertedWith("Only Sender can call this");
+
+      // Attempt to release the escrow by someone other than the sender
+      await expect(paydeceEscrow.connect(sender).releaseEscrowSender(orderId))
+        .to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");  
+    });
+  });
+
   describe("refundSender", function () {
     it("should refund the sender", async function () {
       const orderId = 1;
