@@ -12,7 +12,7 @@ describe("PaydeceEscrow", function () {
     FIATCOIN_TRANSFERED: 3,
     COMPLETED: 4,
     UNKNOWN_5: 5,
-    UNKNOWN_6: 6,
+    APPEAL: 6,
     REFUND: 7,
     UNKNOWN_8: 8,
     CANCEL_SENDER: 9,
@@ -879,6 +879,9 @@ describe("PaydeceEscrow", function () {
       await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
       await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false);
 
+      await expect(paydeceEscrow.connect(owner).releaseEscrowOwner(orderId))
+              .to.be.revertedWith("Status must be FIATCOIN_TRANSFERED");
+    
       await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
 
       // Release the escrow by the owner
@@ -1002,15 +1005,15 @@ describe("PaydeceEscrow", function () {
     });
   });
 
-  describe("version", function () {
-    it("should return the correct version of the contract", async function () {
-      const expectedVersion = "5.0"; // Replace with the actual version of your contract
+  // describe("version", function () {
+  //   it("should return the correct version of the contract", async function () {
+  //     const expectedVersion = "5.0"; // Replace with the actual version of your contract
 
-      // Get the version of the contract
-      const version = await paydeceEscrow.version();
-      expect(version).to.equal(expectedVersion);
-    });
-  });
+  //     // Get the version of the contract
+  //     const version = await paydeceEscrow.version();
+  //     expect(version).to.equal(expectedVersion);
+  //   });
+  // });
 
   describe("setTimeProcess", function () {
     it("should set the time process by the owner", async function () {
@@ -1039,6 +1042,102 @@ describe("PaydeceEscrow", function () {
         await expect(paydeceEscrow.connect(owner).setTimeProcess(newTimeProcess))
           .to.be.revertedWith("The timeProcess can be 0");
       });
+  });
+
+
+  describe("appeal", function () {
+    it("should allow the sender to appeal", async function () {
+      const orderId = 1;
+      const value = ethers.utils.parseEther("10");
+      const fee = value.mul(500).div(100000); // 0.5% fee
+
+      // Transfer tokens to sender
+      await token.transfer(sender.address, value.add(fee));
+
+      // Approve and create escrow
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false);
+
+      // Mark as paid by receiver
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
+
+      // Appeal by sender
+      await paydeceEscrow.connect(sender).appeal(orderId, true);
+
+      const escrow = await paydeceEscrow.escrows(orderId);
+      
+      expect(escrow.status).to.equal(EscrowStatus.APPEAL);
+      expect(escrow.appeal.appealSender).to.be.true;
+    });
+
+    it("should allow the receiver to appeal", async function () {
+      const orderId = 1;
+      const value = ethers.utils.parseEther("10");
+      const fee = value.mul(500).div(100000); // 0.5% fee
+
+      // Transfer tokens to sender
+      await token.transfer(sender.address, value.add(fee));
+
+      // Approve and create escrow
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false);
+
+      // Mark as paid by receiver
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
+
+      // Appeal by receiver
+      await paydeceEscrow.connect(receiver).appeal(orderId, false);
+
+      const escrow = await paydeceEscrow.escrows(orderId);
+      expect(escrow.status).to.equal(EscrowStatus.APPEAL);
+      expect(escrow.appeal.appealReceiver).to.be.true;
+
+      // await expect(paydeceEscrow.connect(receiver).appeal(orderId, false))
+      //   .to.be.revertedWith("Status must be FIATCOIN_TRANSFERED or APPEAL");
+    });
+
+    it("should fail if not called by a participant", async function () {
+      const orderId = 1;
+      const value = ethers.utils.parseEther("10");
+      const fee = value.mul(500).div(100000); // 0.5% fee
+
+      // Transfer tokens to sender
+      await token.transfer(sender.address, value.add(fee));
+
+      // Approve and create escrow
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false);
+
+      // Mark as paid by receiver
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
+
+      // Attempt to appeal by someone other than the sender or receiver
+      await expect(paydeceEscrow.connect(other).appeal(orderId, true))
+        .to.be.revertedWith("Only sender can appeal");
+
+      await expect(paydeceEscrow.connect(other).appeal(orderId, false))
+        .to.be.revertedWith("Only receiver can appeal");
+    });
+
+    it("should fail if the status is not FIATCOIN_TRANSFERED or APPEAL", async function () {
+      const orderId = 1;
+      const value = ethers.utils.parseEther("10");
+      const fee = value.mul(500).div(100000); // 0.5% fee
+
+      // Transfer tokens to sender
+      await token.transfer(sender.address, value.add(fee));
+
+      // Approve and create escrow
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false);
+
+      const escrow = await paydeceEscrow.escrows(orderId);
+      console.log("status-->",escrow.status);
+
+      // Attempt to appeal by sender when status is not FIATCOIN_TRANSFERED or APPEAL
+      await expect(paydeceEscrow.connect(sender).appeal(orderId, true))
+        .to.be.revertedWith("Status must be FIATCOIN_TRANSFERED or APPEAL");
+    });
   });
 
   // Add more tests for other functions like setTimeProcess, addStablesAddresses, delStablesAddresses, etc.

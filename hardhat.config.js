@@ -5,6 +5,8 @@ require("@openzeppelin/hardhat-defender");
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
+require("hardhat-contract-sizer");
+require("hardhat-gas-reporter");
 
 const mnemonic = process.env.MNEMONIC;
 const mnemonic2 = process.env.MNEMONIC2;
@@ -16,7 +18,7 @@ const TESTNET_GAS_MULT = 1.1;
 
 const { LINEASCAN_API_KEY } = process.env;
 
-module.exports = {
+module.exports = {  
   defender: {
     apiKey: process.env.DEFENDER_TEAM_API_KEY,
     apiSecret: process.env.DEFENDER_TEAM_API_SECRET_KEY,
@@ -37,10 +39,13 @@ module.exports = {
       accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
     },
     bsctestnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      // url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      url: "https://data-seed-prebsc-1-s3.bnbchain.org:8545",
       chainId: 97,
-      gasPrice: 1000000000,
+      gasPrice: 300000000000,
+      price: 300000000000,
       accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
+      //allowUnlimitedContractSize: true,
     },
     bscmainnet: {
       url: "https://bsc-dataseed.binance.org/",
@@ -182,7 +187,7 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
-    //apiKey: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K", //BSC Binance
+    apiKey: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K", //BSC Binance
     //apiKey: "WR353HZ9P2IKRW6NBJZ7BF5N8KXKRS46TN", //ETH
     //apiKey: "HQQ4FH84PNC244F6WVEA72G73SJS96ZSGC", //Polygon
     //apiKey: "BCMW9FNGPGE3VMH43IAKYWCUY8GM6YQRT6", //OP Goerli
@@ -242,63 +247,65 @@ module.exports = {
     //     },
     //   },
     // ],
-    apiKey: {
-      linea_mainnet: LINEASCAN_API_KEY,
-      polygonAmoy: process.env.POLYGONSCAN_API_KEY,
-      base_sepolia: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
-      base_mainnet: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
-      lachain: "abc",
-    },
-    customChains: [
-      {
-        network: "lachain",
-        chainId: 274,
-        urls: {
-          apiURL: "https://explorer.lachain.network/api",
-          browserURL: "https://explorer.lachain.network"
-        }
-      },
-      {
-        network: "linea_testnet",
-        chainId: 59140,
-        urls: {
-          apiURL: "https://api-testnet.lineascan.build/api",
-          browserURL: "https://goerli.lineascan.build/address",
-        },
-      },
-      {
-        network: "linea_mainnet",
-        chainId: 59144,
-        urls: {
-          apiURL: "https://api.lineascan.build/api",
-          browserURL: "https://lineascan.build/",
-        },
-      },
-      {
-        network: "polygonAmoy",
-        chainId: 80002,
-        urls: {
-          apiURL: "https://api-amoy.polygonscan.com/api",
-          browserURL: "https://amoy.polygonscan.com",
-        },
-      },
-      {
-        network: "base_sepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "base_mainnet",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.basescan.org/api",
-          browserURL: "https://basescan.org",
-        },
-      },
-    ],
+  //   apiKey: {
+  //     linea_mainnet: LINEASCAN_API_KEY,
+  //     polygonAmoy: process.env.POLYGONSCAN_API_KEY,
+  //     base_sepolia: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
+  //     base_mainnet: "VV73AHKSAD3PY59BPPZY8AS9ISMHEM839R",
+  //     lachain: "abc",
+  //     bsctestnet: "SBBBTAP79DSD3YIAQJVPDIJE13CVMG8A9K",
+  //   },
+  //   customChains: [
+  //     {
+  //       network: "lachain",
+  //       chainId: 274,
+  //       urls: {
+  //         apiURL: "https://explorer.lachain.network/api",
+  //         browserURL: "https://explorer.lachain.network"
+  //       }
+  //     },
+  //     {
+  //       network: "linea_testnet",
+  //       chainId: 59140,
+  //       urls: {
+  //         apiURL: "https://api-testnet.lineascan.build/api",
+  //         browserURL: "https://goerli.lineascan.build/address",
+  //       },
+  //     },
+  //     {
+  //       network: "linea_mainnet",
+  //       chainId: 59144,
+  //       urls: {
+  //         apiURL: "https://api.lineascan.build/api",
+  //         browserURL: "https://lineascan.build/",
+  //       },
+  //     },
+  //     {
+  //       network: "polygonAmoy",
+  //       chainId: 80002,
+  //       urls: {
+  //         apiURL: "https://api-amoy.polygonscan.com/api",
+  //         browserURL: "https://amoy.polygonscan.com",
+  //       },
+  //     },
+  //     {
+  //       network: "base_sepolia",
+  //       chainId: 84532,
+  //       urls: {
+  //         apiURL: "https://api-sepolia.basescan.org/api",
+  //         browserURL: "https://basescan.org",
+  //       },
+  //     },
+  //     {
+  //       network: "base_mainnet",
+  //       chainId: 8453,
+  //       urls: {
+  //         apiURL: "https://api.basescan.org/api",
+  //         browserURL: "https://basescan.org",
+  //       },
+  //     },
+  //   ],
+  // },
   },
   solidity: "0.8.19",
 };

@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import "./IERC20.sol";
-import "./Address.sol";
 import "./SafeERC20.sol";
 import "./ReentrancyGuard.sol";
 import "./Context.sol";
@@ -27,11 +26,17 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         FIATCOIN_TRANSFERED, // 3,
         COMPLETED, // 4,
         UNKNOWN_5,
-        UNKNOWN_6,
+        APPEAL, // 6,
         REFUND, // 7,
         UNKNOWN_8,
         CANCEL_SENDER, //9
         CANCEL_RECEIVER //10
+    }
+
+    struct Appeal {
+        bool appealSender;
+        bool appealReceiver;
+        uint16 appealReasonId;
     }
 
     struct Escrow {
@@ -45,6 +50,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         IERC20 currency; //Money
         EscrowStatus status; //Status
         uint256 created;
+        Appeal appeal;
     }
 
     event EscrowDeposit(uint indexed orderId, Escrow escrow);
@@ -60,6 +66,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event delStablesAddressesEvent(address addressStable);
     event setFeeSenderEvent(uint16 feeSender);
     event setFeeReceiverEvent(uint16 feeReceiver);
+    event EscrowAppealSender(uint indexed orderId, Escrow escrow);
+    event EscrowAppealReceiver(uint indexed orderId, Escrow escrow);
 
     /**
      * @notice  modifier only the Sender
@@ -97,12 +105,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _feeReceiver  .
      */
     function setFeeReceiver(uint16 _feeReceiver) external onlyOwner() {
-        require(
-            _feeReceiver >= 0 && _feeReceiver <= 500,
-            "The fee can be from 0% to 0.5%"
-        );
+        require(_feeReceiver >= 0 && _feeReceiver <= 500,"The fee can be from 0% to 0.5%");
         feeReceiver = _feeReceiver;
-
         emit setFeeReceiverEvent(_feeReceiver);
     }
 
@@ -111,12 +115,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _feeSender  .
      */
     function setFeeSender(uint16 _feeSender) external onlyOwner() {
-        require(
-            _feeSender >= 0 && _feeSender <= 500,
-            "The fee can be from 0% to 0.5%"
-        );
+        require(_feeSender >= 0 && _feeSender <= 500,"The fee can be from 0% to 0.5%");
         feeSender = _feeSender;
-
         emit setFeeSenderEvent(_feeSender);
     }
 
@@ -127,7 +127,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     function setTimeProcess(uint256 _timeProcess) external onlyOwner {
         require(_timeProcess > 0, "The timeProcess can be 0");
         timeProcess = _timeProcess;
-
         emit setTimeProcessEvent(timeProcess);
     }
 
@@ -150,10 +149,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     ) external virtual {
         require(_receiver != address(0), "The address receiver cannot be empty");
 
-        require(
-            escrows[_orderId].status == EscrowStatus.Unknown,
-            "Escrow already exists"
-        );
+        require(escrows[_orderId].status == EscrowStatus.Unknown,"Escrow already exists");
 
         require(
             whitelistedStablesAddresses[address(_currency)],
@@ -164,14 +160,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         require(_value > 0, "The parameter value cannot be zero");
 
-        uint8 _decimals = _currency.decimals();
-
         //Gets the amount to transfer from the buyer to the contract
         uint256 _amountFeeSender = 0;
         
         if (!_sender_premium) {
-            _amountFeeSender = ((_value * (feeSender * 10 ** _decimals)) /
-                (100 * 10 ** _decimals)) / 1000;
+            _amountFeeSender = ((_value * (feeSender * 10 ** _currency.decimals())) /
+                (100 * 10 ** _currency.decimals())) / 1000;
 
             // Add fee
             feesAvailable[_currency] += _amountFeeSender;    
@@ -184,6 +178,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             (_value + _amountFeeSender)
         );
 
+        // Appeal memory _appeal = Appeal(false, false, 0);
+
         escrows[_orderId] = Escrow(
             payable(msg.sender),
             _receiver,
@@ -194,7 +190,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             feeSender,
             _currency,
             EscrowStatus.CRYPTOS_IN_CUSTODY,
-            block.timestamp
+            block.timestamp,
+            Appeal(false, false, 0)
         );
 
         emit EscrowDeposit(_orderId, escrows[_orderId]);
@@ -251,7 +248,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             feeSender,
             IERC20(address(0)),
             EscrowStatus.CRYPTOS_IN_CUSTODY,
-            block.timestamp
+            block.timestamp,
+            Appeal(false, false, 0)
         );
 
         emit EscrowDeposit(_orderId, escrows[_orderId]);
@@ -282,15 +280,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _orderId  .
      */
     function releaseEscrow(uint _orderId) external onlySender(_orderId) {
-        require(
-            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
-            "Status must be FIATCOIN_TRANSFERED"
-        );
+        require(escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,"Status must be FIATCOIN_TRANSFERED");
         _releaseEscrow(_orderId);
     }
 
     /**
-     * @notice  Release Escrow
+     * @notice  Release Escrow Sender
      * @param   _orderId  .
      */
     function releaseEscrowSender(uint _orderId) external onlySender(_orderId) {
@@ -323,10 +318,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Refund not approved"
         );
 
-        uint256 _value = escrows[_orderId].value;
-        address _sender = escrows[_orderId].sender;
-        IERC20 _currency = escrows[_orderId].currency;
-
         uint256 _amountFeeSender = getAmountFeeSender(_orderId, false);
 
         // write as refun, in case transfer fails
@@ -335,7 +326,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         //update fee
         feesAvailable[escrows[_orderId].currency] -= _amountFeeSender;
 
-        _currency.safeTransfer(_sender, _value + _amountFeeSender);
+        escrows[_orderId].currency.safeTransfer(escrows[_orderId].sender, escrows[_orderId].value + _amountFeeSender);
 
         emit EscrowRefundSender(_orderId, escrows[_orderId]);
     }
@@ -353,9 +344,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Refund not approved"
         );
 
-        uint256 _value = escrows[_orderId].value;
-        address _sender = escrows[_orderId].sender;
-
         uint256 _amountFeeSender = getAmountFeeSender(_orderId, true);
 
         // write as refun, in case transfer fails
@@ -364,8 +352,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         feesAvailableNativeCoin -= _amountFeeSender;
 
         //Transfer call
-        (bool sent, ) = payable(address(_sender)).call{
-            value: _value + _amountFeeSender
+        (bool sent, ) = payable(address(escrows[_orderId].sender)).call{
+            value: escrows[_orderId].value + _amountFeeSender
         }("");
         require(sent, "Transfer failed.");
 
@@ -413,8 +401,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @return  EscrowStatus  .
      */
     function getState(uint _orderId) external view returns (EscrowStatus) {
-        Escrow memory _escrow = escrows[_orderId];
-        return _escrow.status;
+        return escrows[_orderId].status;
     }
 
     /**
@@ -454,10 +441,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Status must be CRYPTOS_IN_CUSTODY"
         );
 
-        uint256 _timeDiff = block.timestamp - escrows[_orderId].created;
-
         // Process time validation
-        require(_timeDiff > timeProcess, "Time is still running out.");
+        require((block.timestamp - escrows[_orderId].created) > timeProcess, "Time is still running out.");
 
         // Status change
         escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
@@ -491,10 +476,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Status must be CRYPTOS_IN_CUSTODY"
         );
 
-        uint256 _timeDiff = block.timestamp - escrows[_orderId].created;
-
         // Process time validation
-        require(_timeDiff > timeProcess, "Time is still running out.");
+        require((block.timestamp - escrows[_orderId].created) > timeProcess, "Time is still running out.");
 
         // Status change
         escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
@@ -612,6 +595,30 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         emit EscrowMarkAsPaidOwner(_orderId, escrows[_orderId]);
     }
 
+    /**
+ * @notice  Appeal Sender or Receiver
+ * @param   _orderId  .
+ * @param   isSender  Indicates if the appeal is from the sender.
+ */
+function appeal(uint256 _orderId, bool isSender) external {
+    require(
+        escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED && escrows[_orderId].status != EscrowStatus.APPEAL,
+        "Status must be FIATCOIN_TRANSFERED or APPEAL"
+    );
+
+    if (isSender) {
+        require(msg.sender == escrows[_orderId].sender, "Only sender can appeal");
+        escrows[_orderId].appeal.appealSender = true;
+        emit EscrowAppealSender(_orderId, escrows[_orderId]);
+    } else {
+        require(msg.sender == escrows[_orderId].receiver, "Only receiver can appeal");
+        escrows[_orderId].appeal.appealReceiver = true;
+        emit EscrowAppealReceiver(_orderId, escrows[_orderId]);
+    }
+
+    escrows[_orderId].status = EscrowStatus.APPEAL;
+}
+
     // ================== End External functions ==================
 
     // ================== Begin External functions that are pure ==================
@@ -619,9 +626,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @notice  Get Version
      * @return  string  .
      */
-    function version() external pure virtual returns (string memory) {
-        return "5.0";
-    }
+    // function version() external pure virtual returns (string memory) {
+    //     return "5.0";
+    // }
 
     // ================== End External functions that are pure ==================
 
