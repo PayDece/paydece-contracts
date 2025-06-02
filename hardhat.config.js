@@ -19,6 +19,13 @@ const TESTNET_GAS_MULT = 1.1;
 const { LINEASCAN_API_KEY } = process.env;
 
 module.exports = {  
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 200,
+      details: { yul: false },
+    },
+  },
   defender: {
     apiKey: process.env.DEFENDER_TEAM_API_KEY,
     apiSecret: process.env.DEFENDER_TEAM_API_SECRET_KEY,
