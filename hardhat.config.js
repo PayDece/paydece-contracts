@@ -24,6 +24,7 @@ module.exports = {
       enabled: true,
       runs: 200,
       details: { yul: false },
+      viaIR: true,
     },
   },
   defender: {
@@ -49,10 +50,10 @@ module.exports = {
       // url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       url: "https://data-seed-prebsc-1-s3.bnbchain.org:8545",
       chainId: 97,
-      gasPrice: 300000000000,
-      price: 300000000000,
+      gasPrice: 3000000000,
+      price: 3000000000,
       accounts: [mnemonic, mnemonic2, mnemonic_mac1, mnemonicpaydece],
-      //allowUnlimitedContractSize: true,
+      allowUnlimitedContractSize: true,
     },
     bscmainnet: {
       url: "https://bsc-dataseed.binance.org/",
