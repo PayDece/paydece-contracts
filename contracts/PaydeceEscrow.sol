@@ -9,8 +9,6 @@ import "./Ownable.sol";
 
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
     // 0.1 is 100 because it is multiplied by a thousand => 0.1 X 1000 = 100
-    uint16 public feeReceiver;
-    uint16 public feeSender;
     uint256 public timeProcess; //Time they have to complete the transaction
 
     // Variables de fee configurables para cada escala
@@ -20,6 +18,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     uint16 public scale4Percent; // 0.75% = 75
     uint16 public scale5Percent; // 0.5% = 50
     uint16 public scale6Percent; // 0.25% = 25
+    uint16 public merchantVerifiedPercent; // 0.25% = 25
 
     using SafeERC20 for IERC20;
     mapping(uint => Escrow) public escrows;
@@ -51,19 +50,17 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         address payable sender; //Sender
         address payable receiver; //Receiver
         uint256 value; // Purchase amount
-        uint16 receiverfee; //Fee Receiver
-        uint16 senderfee; //Fee Sender
+        uint256 receiverfee; //Fee Receiver
+        uint256 senderfee; //Fee Sender
         IERC20 currency; //Money
         EscrowStatus status; //Status
         uint256 created;
+        bool isSenderMerchant;
+        bool isReceiverMerchant;
     }
 
     // Mappings para campos secundarios
     mapping(uint => Appeal) public escrowAppeals;
-    mapping(uint => uint256) public feeAmountSenderByOrder;
-    mapping(uint => uint256) public feeAmountReceiverByOrder;
-    mapping(uint => bool) public isSenderMerchantByOrder;
-    mapping(uint => bool) public isReceiverMerchantByOrder;
 
     event EscrowDeposit(uint indexed orderId, Escrow escrow);
     event EscrowComplete(uint indexed orderId, Escrow escrow);
@@ -75,11 +72,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event setTimeProcessEvent(uint256 timeProcess);
     event addStablesAddressesEvent(address addressStable);
     event delStablesAddressesEvent(address addressStable);
-    event setFeeSenderEvent(uint16 feeSender);
-    event setFeeReceiverEvent(uint16 feeReceiver);
     event EscrowAppealSender(uint indexed orderId, Escrow escrow);
     event EscrowAppealReceiver(uint indexed orderId, Escrow escrow);
-    event MerchantVerified(address indexed merchant, bool verified);
 
     /**
      * @notice  modifier only the Sender
@@ -107,8 +101,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     constructor() {
         timeProcess = 45 * 60; //45mi
-        feeReceiver = 500; //0.5% fix fee
-        feeSender = 500; //0.5% fix fee
         // Inicializar valores de fee escalas
         scale1FixedFee = 5 * 10 ** 17; // 0.5 USDC (18 decimales)
         scale2Percent = 125; // 1.25%
@@ -116,29 +108,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         scale4Percent = 75; // 0.75%
         scale5Percent = 50; // 0.5%
         scale6Percent = 25; // 0.25%
+        merchantVerifiedPercent = 25; // 0.25%
     }
 
     // ================== Begin External functions ==================   
-    /**
-     * @notice  Set Fee Receiver
-     * @param   _feeReceiver  .
-     */
-    function setFeeReceiver(uint16 _feeReceiver) external onlyOwner() {
-        require(_feeReceiver >= 0 && _feeReceiver <= 500,"The fee can be from 0% to 0.5%");
-        feeReceiver = _feeReceiver;
-        emit setFeeReceiverEvent(_feeReceiver);
-    }
-
-    /**
-     * @notice  Set Fee Sender
-     * @param   _feeSender  .
-     */
-    function setFeeSender(uint16 _feeSender) external onlyOwner() {
-        require(_feeSender >= 0 && _feeSender <= 500,"The fee can be from 0% to 0.5%");
-        feeSender = _feeSender;
-        emit setFeeSenderEvent(_feeSender);
-    }
-
+    
     /**
      * @notice  Set Time Process
      * @param   _timeProcess  .
@@ -147,16 +121,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         require(_timeProcess > 0, "The timeProcess can be 0");
         timeProcess = _timeProcess;
         emit setTimeProcessEvent(timeProcess);
-    }
-
-    /**
-     * @notice  Add or remove a verified merchant
-     * @param   merchant  .
-     * @param   verified  .
-     */
-    function setVerifiedMerchant(address merchant, bool verified) external onlyOwner {
-        verifiedMerchants[merchant] = verified;
-        emit MerchantVerified(merchant, verified);
     }
 
     /**
@@ -184,29 +148,29 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
         require(msg.sender != receiver, "Receiver cannot be the same as sender");
         require(value > 0, "The parameter value cannot be zero");
-        uint256 feeAmountSender = _calculateFee(msg.sender, receiver, value, currency, isSenderMerchant, false);
-        uint256 feeAmountReceiver = _calculateFee(msg.sender, receiver, value, currency, false, isReceiverMerchant);
-        feesAvailable[currency] += (feeAmountSender + feeAmountReceiver);
+        bool isSenderVerified = verifiedMerchants[msg.sender];
+        bool isReceiverVerified = verifiedMerchants[receiver];
+        uint256 feeAmountSender = _calculateFee(value, currency, isSenderMerchant, false, isSenderVerified);
+        uint256 feeAmountReceiver = _calculateFee(value, currency, false, isReceiverMerchant, isReceiverVerified);
+        
         currency.safeTransferFrom(
             msg.sender,
             address(this),
-            (value + feeAmountSender + feeAmountReceiver)
+            (value + feeAmountSender)
         );
         Escrow storage e = escrows[orderId];
         e.sender = payable(msg.sender);
         e.receiver = receiver;
         e.value = value;
-        e.receiverfee = feeReceiver;
-        e.senderfee = feeSender;
+        e.receiverfee = feeAmountReceiver;
+        e.senderfee = feeAmountSender;
         e.currency = currency;
         e.status = EscrowStatus.CRYPTOS_IN_CUSTODY;
         e.created = block.timestamp;
+        e.isSenderMerchant = isSenderMerchant;
+        e.isReceiverMerchant = isReceiverMerchant;
         // Guardar campos secundarios en mappings
         escrowAppeals[orderId] = Appeal(false, false, 0);
-        feeAmountSenderByOrder[orderId] = feeAmountSender;
-        feeAmountReceiverByOrder[orderId] = feeAmountReceiver;
-        isSenderMerchantByOrder[orderId] = isSenderMerchant;
-        isReceiverMerchantByOrder[orderId] = isReceiverMerchant;
         emit EscrowDeposit(orderId, escrows[orderId]);
     }
 
@@ -227,7 +191,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _orderId  .
      */
     function releaseEscrow(uint _orderId) external onlySender(_orderId) {
-        require(escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED || escrows[_orderId].status == EscrowStatus.APPEAL ,"Status must be FIATCOIN_TRANSFERED");
+        require(escrows[_orderId].status != EscrowStatus.APPEAL, "Status must NOT be APPEAL");
         _releaseEscrow(_orderId,false);
     }
 
@@ -240,9 +204,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             escrows[_orderId].status == EscrowStatus.APPEAL,
             "Refund not approved"
         );
-        uint256 _amountFeeSender = feeAmountSenderByOrder[_orderId];
+        uint256 _amountFeeSender = escrows[_orderId].senderfee;
         escrows[_orderId].status = EscrowStatus.REFUND;
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeSender;
+        
         escrows[_orderId].currency.safeTransfer(escrows[_orderId].sender, escrows[_orderId].value + _amountFeeSender);
         emit EscrowRefundOwner(_orderId, escrows[_orderId]);
     }
@@ -259,7 +223,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
         _amount = feesAvailable[_currency];
 
-        feesAvailable[_currency] -= _amount;
+        if(_amount>0){
+            feesAvailable[_currency] -= _amount;
+        }
 
         _currency.safeTransfer(owner(), _amount);
     }
@@ -310,8 +276,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
         require((block.timestamp - escrows[_orderId].created) > timeProcess, "Time is still running out.");
         escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
-        uint256 _amountFeeSender = feeAmountSenderByOrder[_orderId];
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeSender;
+        uint256 _amountFeeSender = escrows[_orderId].senderfee;
+        
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].sender,
             escrows[_orderId].value + _amountFeeSender
@@ -327,12 +293,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 _orderId
     ) external nonReentrant onlyReceiver(_orderId) {
         require(
-            escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
+            escrows[_orderId].status >= EscrowStatus.FIATCOIN_TRANSFERED,
             "Status must be CRYPTOS_IN_CUSTODY"
         );
         escrows[_orderId].status = EscrowStatus.CANCEL_RECEIVER;
-        uint256 _amountFeeReceiver = feeAmountReceiverByOrder[_orderId];
-        feesAvailable[escrows[_orderId].currency] -= _amountFeeReceiver;
+        uint256 _amountFeeReceiver = escrows[_orderId].receiverfee;
+        
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].sender,
             (escrows[_orderId].value + _amountFeeReceiver)
@@ -375,29 +341,30 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     /**
- * @notice  Appeal Sender or Receiver
- * @param   _orderId  .
- * @param   isSender  Indicates if the appeal is from the sender.
- */
-function appeal(uint256 _orderId, bool isSender, uint16 _appealReasonId) external {
-    require(
-        escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED && escrows[_orderId].status != EscrowStatus.APPEAL,
-        "Status must be FIATCOIN_TRANSFERED or APPEAL"
-    );
-
-    if (isSender) {
-        require(msg.sender == escrows[_orderId].sender, "Only sender can appeal");
-        escrowAppeals[_orderId].appealSender = true;        
-        emit EscrowAppealSender(_orderId, escrows[_orderId]);
-    } else {
-        require(msg.sender == escrows[_orderId].receiver, "Only receiver can appeal");
-        escrowAppeals[_orderId].appealReceiver = true;
-        emit EscrowAppealReceiver(_orderId, escrows[_orderId]);
+     * @notice  Appeal Sender or Receiver
+     * @param   _orderId  .
+     * @param   isSender  Indicates if the appeal is from the sender.
+     */
+    function appeal(uint256 _orderId, bool isSender, uint16 _appealReasonId) external {
+        if (isSender) {
+            require(msg.sender == escrows[_orderId].sender, "Only sender can appeal");
+        } else {
+            require(msg.sender == escrows[_orderId].receiver, "Only receiver can appeal");
+        }
+        require(
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED && escrows[_orderId].status != EscrowStatus.APPEAL,
+            "Status must be FIATCOIN_TRANSFERED or APPEAL"
+        );
+        if (isSender) {
+            escrowAppeals[_orderId].appealSender = true;        
+            emit EscrowAppealSender(_orderId, escrows[_orderId]);
+        } else {
+            escrowAppeals[_orderId].appealReceiver = true;
+            emit EscrowAppealReceiver(_orderId, escrows[_orderId]);
+        }
+        escrowAppeals[_orderId].appealReasonId = _appealReasonId;
+        escrows[_orderId].status = EscrowStatus.APPEAL;
     }
-
-    escrowAppeals[_orderId].appealReasonId = _appealReasonId;
-    escrows[_orderId].status = EscrowStatus.APPEAL;
-}
 
     // ================== End External functions ==================
 
@@ -422,12 +389,12 @@ function appeal(uint256 _orderId, bool isSender, uint16 _appealReasonId) externa
      * @param   _orderId  .
      */
     function _releaseEscrow(uint _orderId, bool isOwner) private nonReentrant {
-        
+        // Solo descontar el receiverfee al receiver
+        uint256 _amountFeeReceiver = escrows[_orderId].receiverfee;
+        uint256 _amountFeeSender = escrows[_orderId].senderfee;
 
-        //Gets the amount to transfer from the buyer to the contract
-        uint256 _amountFeeReceiver = getAmountFeeReceiver(_orderId);
-
-        feesAvailable[escrows[_orderId].currency] += _amountFeeReceiver;
+        // Sumar ambos fees a feesAvailable
+        feesAvailable[escrows[_orderId].currency] += (_amountFeeReceiver + _amountFeeSender);
 
         // write as complete, in case transfer fails
         if(isOwner){
@@ -445,27 +412,14 @@ function appeal(uint256 _orderId, bool isSender, uint16 _appealReasonId) externa
         emit EscrowComplete(_orderId, escrows[_orderId]);
     }
 
-    /**
-     * @notice  Get Amount Fee Receiver
-     * @param   _orderId  .
-     * @return  uint256  .
-     */
-    function getAmountFeeReceiver(
-        uint256 _orderId
-    ) private view returns (uint256) {
-        uint8 _decimals = escrows[_orderId].currency.decimals();
-        uint256 _amountFeeReceiver = 0;
-        _amountFeeReceiver = ((escrows[_orderId].value *
-            (escrows[_orderId].receiverfee * 10 ** _decimals)) /
-            (100 * 10 ** _decimals)) / 1000;
-        return _amountFeeReceiver;
-    }
 
-    
-
-    function _calculateFee(address sender, address receiver, uint256 amount, IERC20 currency, bool isSenderMerchant, bool isReceiverMerchant) internal view returns (uint256) {
+    function _calculateFee(uint256 amount, IERC20 currency, bool isSenderMerchant, bool isReceiverMerchant, bool isMerchantVerified) internal view returns (uint256) {
         uint8 decimals = currency.decimals();
         uint256 usdtDecimals = 10 ** uint256(decimals);
+        // Si es merchant verificado, aplica la comisión merchant verificado
+        if (isMerchantVerified) {
+            return (amount * merchantVerifiedPercent) / 10000;
+        }
         // Si alguno es merchant, aplica el fee merchant (0.25%)
         if (isSenderMerchant || isReceiverMerchant) {
             return (amount * 25) / 10000;
@@ -521,9 +475,32 @@ function appeal(uint256 _orderId, bool isSender, uint16 _appealReasonId) externa
         scale6Percent = value;
     }
 
+    /**
+     * @notice  Add Verified Merchant
+     * @param   _merchant  .
+     */
+    function addVerifiedMerchant(address _merchant) external onlyOwner {
+        verifiedMerchants[_merchant] = true;
+    }
+    /**
+     * @notice  Remove Verified Merchant
+     * @param   _merchant  .
+     */
+    function removeVerifiedMerchant(address _merchant) external onlyOwner {
+        verifiedMerchants[_merchant] = false;
+    }
+    /**
+     * @notice  Set Merchant Verified Percent
+     * @param   value  .
+     */
+    function setMerchantVerifiedPercent(uint16 value) external onlyOwner {
+        require(value <= 200, "MerchantVerifiedPercent must be <= 2% (200)");
+        merchantVerifiedPercent = value;
+    }
+
     /// @notice Exponer el cálculo de fee para testing y frontends
-    function publicCalculateFee(address sender, address receiver, uint256 amount, IERC20 currency, bool isSenderMerchant, bool isReceiverMerchant) external view returns (uint256) {
-        return _calculateFee(sender, receiver, amount, currency, isSenderMerchant, isReceiverMerchant);
+    function publicCalculateFee(uint256 amount, IERC20 currency, bool isSenderMerchant, bool isReceiverMerchant, bool isMerchantVerified) external view returns (uint256) {
+        return _calculateFee(amount, currency, isSenderMerchant, isReceiverMerchant, isMerchantVerified);
     }
 
     // ================== End Private functions ==================
