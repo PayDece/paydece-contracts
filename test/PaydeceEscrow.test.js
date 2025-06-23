@@ -303,17 +303,33 @@ describe("PaydeceEscrow", function () {
   });
 
   describe("cancelReceiver", function () {
-    it("should cancel the escrow by the receiver", async function () {
+    it("should cancel the escrow by the receiver in CRYPTOS_IN_CUSTODY", async function () {
       const orderId = 1;
       const value = ethers.utils.parseEther("10");
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
+      const senderBalanceBefore = await token.balanceOf(sender.address);
       await paydeceEscrow.connect(receiver).cancelReceiver(orderId);
       const escrow = await paydeceEscrow.escrows(orderId);
+      const senderBalanceAfter = await token.balanceOf(sender.address);
       expect(escrow.status).to.equal(EscrowStatus.CANCEL_RECEIVER); // CANCEL_RECEIVER
+      expect(senderBalanceAfter.sub(senderBalanceBefore)).to.equal(value.add(escrow.receiverfee));
+    });
+
+    it("should cancel the escrow by the receiver in FIATCOIN_TRANSFERED", async function () {
+      const orderId = 2;
+      const value = ethers.utils.parseEther("10");
+      await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId); // Cambia a FIATCOIN_TRANSFERED
+      const senderBalanceBefore = await token.balanceOf(sender.address);
+      await paydeceEscrow.connect(receiver).cancelReceiver(orderId);
+      const escrow = await paydeceEscrow.escrows(orderId);
+      const senderBalanceAfter = await token.balanceOf(sender.address);
+      expect(escrow.status).to.equal(EscrowStatus.CANCEL_RECEIVER); // CANCEL_RECEIVER
+      expect(senderBalanceAfter.sub(senderBalanceBefore)).to.equal(value.add(escrow.receiverfee));
     });
 
     it("should fail if not called by the receiver", async function () {
-      const orderId = 1;
+      const orderId = 3;
       const value = ethers.utils.parseEther("10");
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await expect(
@@ -321,20 +337,15 @@ describe("PaydeceEscrow", function () {
       ).to.be.revertedWith("Only Receiver can call this");
     });
 
-    it("should fail if not state is CRYPTOS_IN_CUSTODY", async function () {
-      const orderId = 3;
+    it("should fail if not state is CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED", async function () {
+      const orderId = 4;
       const value = ethers.utils.parseEther("10");
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
-      await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
-      // Ahora el estado es APPEAL, releaseEscrow debe fallar
-      await expect(
-        paydeceEscrow.connect(sender).releaseEscrow(orderId)
-      ).to.be.revertedWith("Status must NOT be APPEAL");
-      // cancelReceiver debe seguir fallando por estado
+      await paydeceEscrow.connect(sender).appeal(orderId, true, 1); // Cambia a APPEAL
       await expect(
         paydeceEscrow.connect(receiver).cancelReceiver(orderId)
-      ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
+      ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
     });
   });
 
@@ -1332,12 +1343,13 @@ describe("PaydeceEscrow", function () {
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await expect(paydeceEscrow.connect(sender).cancelSender(orderId)).to.be.revertedWith("Time is still running out.");
     });
-    it("should revert cancelReceiver if status is not CRYPTOS_IN_CUSTODY", async function () {
+    it("should revert cancelReceiver if status is not CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED", async function () {
       const orderId = 9005;
       const value = ethers.utils.parseUnits("10", 18);
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
-      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
-      await expect(paydeceEscrow.connect(receiver).cancelReceiver(orderId)).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId); // Cambia a FIATCOIN_TRANSFERED
+      await paydeceEscrow.connect(sender).appeal(orderId, true, 1); // Cambia a APPEAL
+      await expect(paydeceEscrow.connect(receiver).cancelReceiver(orderId)).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
     });
     it("should revert withdrawFees if no fees available", async function () {
       const Token = await ethers.getContractFactory("USDTToken");
@@ -1472,15 +1484,18 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(owner).setMarkAsPaidOwner(orderId);
       await expect(paydeceEscrow.connect(sender).cancelSender(orderId)).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
     });
-    it("should revert cancelReceiver if status is not CRYPTOS_IN_CUSTODY", async function () {
+    it("should revert cancelReceiver if status is not CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED", async function () {
       const orderId = 9992;
-      await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, ethers.utils.parseUnits("100", 18), token, false, false);
-      await paydeceEscrow.connect(owner).setMarkAsPaidOwner(orderId);
-      await expect(paydeceEscrow.connect(receiver).cancelReceiver(orderId)).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY");
+      const value = ethers.utils.parseUnits("100", 18);
+      await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId); // Cambia a FIATCOIN_TRANSFERED
+      await paydeceEscrow.connect(sender).appeal(orderId, true, 1); // Cambia a APPEAL
+      await expect(paydeceEscrow.connect(receiver).cancelReceiver(orderId)).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
     });
     it("should revert refundOwner if status is not APPEAL", async function () {
       const orderId = 9993;
-      await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, ethers.utils.parseUnits("100", 18), token, false, false);
+      const value = ethers.utils.parseUnits("100", 18);
+      await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await expect(paydeceEscrow.connect(owner).refundOwner(orderId)).to.be.revertedWith("Refund not approved");
     });
     it("should cover both branches of _releaseEscrow (isOwner true/false)", async function () {

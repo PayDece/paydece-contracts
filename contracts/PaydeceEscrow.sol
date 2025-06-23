@@ -293,15 +293,16 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 _orderId
     ) external nonReentrant onlyReceiver(_orderId) {
         require(
-            escrows[_orderId].status >= EscrowStatus.FIATCOIN_TRANSFERED,
-            "Status must be CRYPTOS_IN_CUSTODY"
+            escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY ||
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
+            "Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED"
         );
         escrows[_orderId].status = EscrowStatus.CANCEL_RECEIVER;
-        uint256 _amountFeeReceiver = escrows[_orderId].receiverfee;
+        uint256 _amountFeeSender = escrows[_orderId].senderfee;
         
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].sender,
-            (escrows[_orderId].value + _amountFeeReceiver)
+            (escrows[_orderId].value + _amountFeeSender)
         );
         emit EscrowCancelReceiver(_orderId, escrows[_orderId]);
     }
