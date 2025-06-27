@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.24;
 
 import "./IERC20.sol";
 import "./SafeERC20.sol";
@@ -69,9 +69,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
     event EscrowMarkAsPaidOwner(uint indexed orderId, Escrow escrow);
     event EscrowRefundOwner(uint indexed orderId, Escrow escrow);
-    event setTimeProcessEvent(uint256 timeProcess);
-    event addStablesAddressesEvent(address addressStable);
-    event delStablesAddressesEvent(address addressStable);
+    event SetTimeProcessEvent(uint256 timeProcess);
+    event AddStablesAddressesEvent(address addressStable);
+    event DelStablesAddressesEvent(address addressStable);
     event EscrowAppealSender(uint indexed orderId, Escrow escrow);
     event EscrowAppealReceiver(uint indexed orderId, Escrow escrow);
 
@@ -120,7 +120,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     function setTimeProcess(uint256 _timeProcess) external onlyOwner {
         require(_timeProcess > 0, "The timeProcess can be 0");
         timeProcess = _timeProcess;
-        emit setTimeProcessEvent(timeProcess);
+        emit SetTimeProcessEvent(timeProcess);
     }
 
     /**
@@ -248,7 +248,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     ) external onlyOwner {
         whitelistedStablesAddresses[_addressStableToWhitelist] = true;
 
-        emit addStablesAddressesEvent(_addressStableToWhitelist);
+        emit AddStablesAddressesEvent(_addressStableToWhitelist);
     }
 
     /**
@@ -260,7 +260,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     ) external onlyOwner {
         whitelistedStablesAddresses[_addressStableToWhitelist] = false;
 
-        emit delStablesAddressesEvent(_addressStableToWhitelist);
+        emit DelStablesAddressesEvent(_addressStableToWhitelist);
     }
 
     /**
