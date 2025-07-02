@@ -24,7 +24,7 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 1;
     const value = ethers.utils.parseUnits("100", 18);
     // Calcular el fee real
-    const fee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
+    const fee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
     // Sender aprueba escrow contract por value + fee
     await usdt.connect(sender).approve(paydeceEscrow.address, value.add(fee));
     // Create escrow
@@ -52,8 +52,8 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 2;
     const value = ethers.utils.parseUnits("50", 18);
     // Calcular ambos fees
-    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
-    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
+    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
+    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
     // Balances iniciales
     const senderInitial = await usdt.balanceOf(sender.address);
     const receiverInitial = await usdt.balanceOf(receiver.address);
@@ -87,12 +87,10 @@ describe("PaydeceEscrow Extra Flow", function () {
   it("should create escrow, mark as paid, and release escrow with both sender and receiver as merchants", async function () {
     const orderId = 10;
     const value = ethers.utils.parseUnits("100", 18);
-    // Marcar ambos como merchants
-    await paydeceEscrow.connect(owner).addVerifiedMerchant(sender.address);
-    await paydeceEscrow.connect(owner).addVerifiedMerchant(receiver.address);
+
     // Calcular ambos fees
-    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true, false, true);
-    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, true, true);
+    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
+    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
     // Transferir tokens si hace falta
     // Approve
     await usdt.connect(sender).approve(paydeceEscrow.address, value.add(senderfee));
@@ -127,12 +125,10 @@ describe("PaydeceEscrow Extra Flow", function () {
   it("should allow sender to create and immediately release escrow with both as merchants, and check balances and fees", async function () {
     const orderId = 11;
     const value = ethers.utils.parseUnits("50", 18);
-    // Marcar ambos como merchants
-    await paydeceEscrow.connect(owner).addVerifiedMerchant(sender.address);
-    await paydeceEscrow.connect(owner).addVerifiedMerchant(receiver.address);
+    
     // Calcular ambos fees
-    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true, false, true);
-    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, true, true);
+    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
+    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
     // Approve
     await usdt.connect(sender).approve(paydeceEscrow.address, value.add(senderfee));
     // Balances iniciales
@@ -165,7 +161,7 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 20;
     const value = ethers.utils.parseUnits("100", 18);
     // Calcular ambos fees
-    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
+    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
     // Approve
     await usdt.connect(sender).approve(paydeceEscrow.address, value.add(senderfee));
     // Balances iniciales
@@ -202,8 +198,8 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 30;
     const value = ethers.utils.parseUnits("100", 18);
     // Calcular ambos fees
-    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
-    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
+    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
+    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
     await usdt.connect(sender).approve(paydeceEscrow.address, value.add(senderfee));
     // Create and release escrow
     await paydeceEscrow.connect(sender).createEscrow(
@@ -238,11 +234,10 @@ describe("PaydeceEscrow Extra Flow", function () {
   it("should handle sender as merchant and receiver as non-merchant, and check balances and fees", async function () {
     const orderId = 100;
     const value = ethers.utils.parseUnits("200", 18);
-    // Marcar solo al sender como merchant verificado
-    await paydeceEscrow.connect(owner).addVerifiedMerchant(sender.address);
+    
     // Calcular ambos fees
-    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true, false, true);
-    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
+    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
+    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
     // Balances iniciales
     const senderInitial = await usdt.balanceOf(sender.address);
     const receiverInitial = await usdt.balanceOf(receiver.address);
@@ -276,11 +271,10 @@ describe("PaydeceEscrow Extra Flow", function () {
   it("should handle receiver as merchant and sender as non-merchant, and check balances and fees", async function () {
     const orderId = 101;
     const value = ethers.utils.parseUnits("300", 18);
-    // Marcar solo al receiver como merchant verificado
-    await paydeceEscrow.connect(owner).addVerifiedMerchant(receiver.address);
+    
     // Calcular ambos fees
-    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, false, false);
-    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false, true, true);
+    const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
+    const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
     // Balances iniciales
     const senderInitial = await usdt.balanceOf(sender.address);
     const receiverInitial = await usdt.balanceOf(receiver.address);

@@ -24,7 +24,6 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     mapping(uint => Escrow) public escrows;
     mapping(address => bool) private whitelistedStablesAddresses;
     mapping(IERC20 => uint) public feesAvailable;
-    mapping(address => bool) public verifiedMerchants;
 
     enum EscrowStatus {
         Unknown, //0
@@ -148,10 +147,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
         require(msg.sender != receiver, "Receiver cannot be the same as sender");
         require(value > 0, "The parameter value cannot be zero");
-        bool isSenderVerified = verifiedMerchants[msg.sender];
-        bool isReceiverVerified = verifiedMerchants[receiver];
-        uint256 feeAmountSender = _calculateFee(value, currency, isSenderMerchant, false, isSenderVerified);
-        uint256 feeAmountReceiver = _calculateFee(value, currency, false, isReceiverMerchant, isReceiverVerified);
+        uint256 feeAmountSender = _calculateFee(value, currency, isSenderMerchant);
+        uint256 feeAmountReceiver = _calculateFee(value, currency, isReceiverMerchant);
         
         currency.safeTransferFrom(
             msg.sender,
@@ -414,15 +411,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
 
-    function _calculateFee(uint256 amount, IERC20 currency, bool isSenderMerchant, bool isReceiverMerchant, bool isMerchantVerified) internal view returns (uint256) {
+    function _calculateFee(uint256 amount, IERC20 currency, bool isMerchant) internal view returns (uint256) {
         uint8 decimals = currency.decimals();
         uint256 usdtDecimals = 10 ** uint256(decimals);
-        // Si es merchant verificado, aplica la comisión merchant verificado
-        if (isMerchantVerified) {
-            return (amount * merchantVerifiedPercent) / 10000;
-        }
+        
         // Si alguno es merchant, aplica el fee merchant (0.25%)
-        if (isSenderMerchant || isReceiverMerchant) {
+        if (isMerchant) {
             return (amount * 25) / 10000;
         }
         // Escalas para el resto (rangos continuos)
@@ -476,20 +470,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         scale6Percent = value;
     }
 
-    /**
-     * @notice  Add Verified Merchant
-     * @param   _merchant  .
-     */
-    function addVerifiedMerchant(address _merchant) external onlyOwner {
-        verifiedMerchants[_merchant] = true;
-    }
-    /**
-     * @notice  Remove Verified Merchant
-     * @param   _merchant  .
-     */
-    function removeVerifiedMerchant(address _merchant) external onlyOwner {
-        verifiedMerchants[_merchant] = false;
-    }
+    
     /**
      * @notice  Set Merchant Verified Percent
      * @param   value  .
@@ -500,8 +481,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     /// @notice Exponer el cálculo de fee para testing y frontends
-    function publicCalculateFee(uint256 amount, IERC20 currency, bool isSenderMerchant, bool isReceiverMerchant, bool isMerchantVerified) external view returns (uint256) {
-        return _calculateFee(amount, currency, isSenderMerchant, isReceiverMerchant, isMerchantVerified);
+    function publicCalculateFee(uint256 amount, IERC20 currency, bool isMerchant) external view returns (uint256) {
+        return _calculateFee(amount, currency, isMerchant);
     }
 
     // ================== End Private functions ==================

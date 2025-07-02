@@ -303,8 +303,3 @@ releaseEscrowOwner(orderId); // or refundOwner(orderId)
 - The appeal system allows disputes to be resolved transparently.
 - The contract uses `ReentrancyGuard` to prevent reentrancy attacks.
 - All transfers use `SafeERC20` for greater security.
-
----
-
-## Contact and Support
-For questions or support, contact the Paydece team. 
