@@ -930,7 +930,7 @@ describe("PaydeceEscrow", function () {
       const feeAmountSender = await calculateFee(paydeceEscrow, value, token, false);
       //expect(feeAmountSender).to.equal(expectedFee);
       // receiver no es merchant verificado
-      const feeAmountReceiver = await calculateFee(paydeceEscrow, value, token, false, false, false);
+      const feeAmountReceiver = await calculateFee(paydeceEscrow, value, token, false, false);
       await token.transfer(sender.address, value.add(feeAmountSender).add(feeAmountReceiver));
       await token.connect(sender).approve(paydeceEscrow.address, value.add(feeAmountSender).add(feeAmountReceiver));
       await paydeceEscrow.connect(sender).createEscrow(
@@ -1208,11 +1208,11 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(sender).setScale6Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should not allow scale1FixedFee > 0.5 USDC", async function () {
-      const tooHigh = ethers.utils.parseUnits("0.500000000000000001", 18); // 0.500000000000000001 USDC
+      const tooHigh = 6; // 0.6 token (mayor a 0.5)
       await expect(paydeceEscrow.connect(owner).setScale1FixedFee(tooHigh)).to.be.revertedWith("Scale1FixedFee must be <= 0.5 token");
     });
     it("should allow scale1FixedFee = 0.5 USDC", async function () {
-      const max = ethers.utils.parseUnits("0.5", 18);
+      const max = 5; // 0.5 token
       await paydeceEscrow.connect(owner).setScale1FixedFee(max);
       expect(await paydeceEscrow.scale1FixedFee()).to.equal(max);
     });
@@ -1291,7 +1291,7 @@ describe("PaydeceEscrow", function () {
 
   describe("coverage: extra branches", function () {
     it("should revert setScale1FixedFee if value > 0.5 token", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale1FixedFee(ethers.utils.parseUnits("1", 18))).to.be.revertedWith("Scale1FixedFee must be <= 0.5 token");
+      await expect(paydeceEscrow.connect(owner).setScale1FixedFee(6)).to.be.revertedWith("Scale1FixedFee must be <= 0.5 token");
     });
     it("should revert setScale2Percent if value > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.revertedWith("Scale2Percent must be <= 2% (200)");
@@ -1448,7 +1448,7 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(owner).setMerchantVerifiedPercent(201)).to.be.revertedWith("MerchantVerifiedPercent must be <= 2% (200)");
     });
     it("should revert if setScale1FixedFee > 0.5 token", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale1FixedFee(ethers.utils.parseUnits("0.6", 18))).to.be.revertedWith("Scale1FixedFee must be <= 0.5 token");
+      await expect(paydeceEscrow.connect(owner).setScale1FixedFee(6)).to.be.revertedWith("Scale1FixedFee must be <= 0.5 token");
     });
     it("should revert if setScale2Percent > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.revertedWith("Scale2Percent must be <= 2% (200)");
@@ -1550,8 +1550,11 @@ describe("PaydeceEscrow", function () {
     });
     it("should return scale1FixedFee for 1 <= amount < 50 USDT", async function () {
       const value = ethers.utils.parseUnits("10", 18);
+      const decimals = 18;
+      const scale1FixedFee = await paydeceEscrow.scale1FixedFee();
+      const expected = scale1FixedFee.mul(ethers.BigNumber.from(10).pow(decimals)).div(10);
       const fee = await paydeceEscrow.publicCalculateFee(value, token.address, false);
-      expect(fee).to.equal(await paydeceEscrow.scale1FixedFee());
+      expect(fee).to.equal(expected);
     });
     it("should return scale2Percent for 50 <= amount < 100 USDT", async function () {
       const value = ethers.utils.parseUnits("60", 18);

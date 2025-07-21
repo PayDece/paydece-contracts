@@ -23,8 +23,12 @@ describe("PaydeceEscrow Extra Flow", function () {
   it("should create escrow, mark as paid, and release escrow", async function () {
     const orderId = 1;
     const value = ethers.utils.parseUnits("100", 18);
-    // Calcular el fee real
+    // Calcular el fee real según la lógica del contrato
     const fee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
+    // El fee esperado es scale3Percent para 100 USDT
+    const scale3Percent = await paydeceEscrow.scale3Percent();
+    const expectedFee = value.mul(scale3Percent).div(10000);
+    expect(fee).to.equal(expectedFee);
     // Sender aprueba escrow contract por value + fee
     await usdt.connect(sender).approve(paydeceEscrow.address, value.add(fee));
     // Create escrow
