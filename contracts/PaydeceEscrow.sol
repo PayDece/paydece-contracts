@@ -294,19 +294,12 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @dev Transfers all available fees to owner address
     /// @param _currency The ERC20 token contract address for fee withdrawal
     function withdrawFees(IERC20 _currency) external onlyOwner {
-        uint _amount;
+        uint256 available = feesAvailable[_currency];
+        require(available > 0, "No fees available for withdrawal");
 
-        // This check also prevents underflow
-        require(feesAvailable[_currency] > 0, "Amount > feesAvailable");
-
-        _amount = feesAvailable[_currency];
-
-        if(_amount>0){
-            feesAvailable[_currency] -= _amount;
-        }
-
-        _currency.safeTransfer(owner(), _amount);
-        emit FeesWithdrawn(_currency, _amount, owner());
+        feesAvailable[_currency] = 0;
+        _currency.safeTransfer(owner(), available);
+        emit FeesWithdrawn(_currency, available, owner());
     }
 
     /// @notice Retrieves the current status of an escrow transaction
