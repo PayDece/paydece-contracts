@@ -49,8 +49,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         address payable sender; //Sender
         address payable receiver; //Receiver
         uint256 value; // Purchase amount
-        uint256 receiverfee; //Fee Receiver
-        uint256 senderfee; //Fee Sender
+        uint256 receiverFee; //Fee Receiver
+        uint256 senderFee; //Fee Sender
         IERC20 currency; //Money
         EscrowStatus status; //Status
         uint256 created;
@@ -159,8 +159,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         e.sender = payable(msg.sender);
         e.receiver = receiver;
         e.value = value;
-        e.receiverfee = feeAmountReceiver;
-        e.senderfee = feeAmountSender;
+        e.receiverFee = feeAmountReceiver;
+        e.senderFee = feeAmountSender;
         e.currency = currency;
         e.status = EscrowStatus.CRYPTOS_IN_CUSTODY;
         e.created = block.timestamp;
@@ -201,7 +201,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             escrows[_orderId].status == EscrowStatus.APPEAL,
             "Refund not approved"
         );
-        uint256 _amountFeeSender = escrows[_orderId].senderfee;
+        uint256 _amountFeeSender = escrows[_orderId].senderFee;
         escrows[_orderId].status = EscrowStatus.REFUND;
         
         escrows[_orderId].currency.safeTransfer(escrows[_orderId].sender, escrows[_orderId].value + _amountFeeSender);
@@ -273,7 +273,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
         require((block.timestamp - escrows[_orderId].created) > timeProcess, "Time is still running out.");
         escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
-        uint256 _amountFeeSender = escrows[_orderId].senderfee;
+        uint256 _amountFeeSender = escrows[_orderId].senderFee;
         
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].sender,
@@ -295,7 +295,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             "Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED"
         );
         escrows[_orderId].status = EscrowStatus.CANCEL_RECEIVER;
-        uint256 _amountFeeSender = escrows[_orderId].senderfee;
+        uint256 _amountFeeSender = escrows[_orderId].senderFee;
         
         escrows[_orderId].currency.safeTransfer(
             escrows[_orderId].sender,
@@ -388,8 +388,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      */
     function _releaseEscrow(uint _orderId, bool isOwner) private nonReentrant {
         // Solo descontar el receiverfee al receiver
-        uint256 _amountFeeReceiver = escrows[_orderId].receiverfee;
-        uint256 _amountFeeSender = escrows[_orderId].senderfee;
+        uint256 _amountFeeReceiver = escrows[_orderId].receiverFee;
+        uint256 _amountFeeSender = escrows[_orderId].senderFee;
 
         // Sumar ambos fees a feesAvailable
         feesAvailable[escrows[_orderId].currency] += (_amountFeeReceiver + _amountFeeSender);
