@@ -117,7 +117,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _timeProcess  .
      */
     function setTimeProcess(uint256 _timeProcess) external onlyOwner {
-        require(_timeProcess > 0, "The timeProcess can be 0");
+        require(_timeProcess > 0, "The timeProcess must be greater than 0");
         timeProcess = _timeProcess;
         emit SetTimeProcessEvent(timeProcess);
     }

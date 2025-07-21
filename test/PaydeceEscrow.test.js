@@ -475,7 +475,7 @@ describe("PaydeceEscrow", function () {
       // Attempt to set the time process by someone other than the owner
       await expect(
         paydeceEscrow.connect(owner).setTimeProcess(newTimeProcess)
-      ).to.be.revertedWith("The timeProcess can be 0");
+      ).to.be.revertedWith("The timeProcess must be greater than 0");
     });
   });
 
@@ -542,7 +542,7 @@ describe("PaydeceEscrow", function () {
     it("should not allow setTimeProcess to 0", async function () {
       await expect(
         paydeceEscrow.connect(owner).setTimeProcess(0)
-      ).to.be.revertedWith("The timeProcess can be 0");
+      ).to.be.revertedWith("The timeProcess must be greater than 0");
     });
     it("should not allow withdrawFees if no fees", async function () {
       const Token = await ethers.getContractFactory("USDTToken");
