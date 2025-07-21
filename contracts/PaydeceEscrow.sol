@@ -12,7 +12,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     uint256 public timeProcess; //Time they have to complete the transaction
 
     // Variables de fee configurables para cada escala
-    uint256 public scale1FixedFee; // en decimales del token (ej: 0.5 USDC = 5e17 si 18 decimales)
+    uint256 public scale1FixedFee; // valor entero, ej: 0.5 para medio token
     uint16 public scale2Percent; // 1.25% = 125
     uint16 public scale3Percent; // 1% = 100
     uint16 public scale4Percent; // 0.75% = 75
@@ -101,7 +101,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     constructor() {
         timeProcess = 45 * 60; //45mi
         // Inicializar valores de fee escalas
-        scale1FixedFee = 5 * 10 ** 17; // 0.5 USDC (18 decimales)
+        scale1FixedFee = 5; // 0.5 token (sin decimales)
         scale2Percent = 125; // 1.25%
         scale3Percent = 100; // 1%
         scale4Percent = 75; // 0.75%
@@ -423,7 +423,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 amountUsdt = amount / usdtDecimals;
         if (amountUsdt >= 1 && amountUsdt < 50) {
             // Escala 1: fijo
-            return scale1FixedFee;
+            return scale1FixedFee * usdtDecimals / 10; // scale1FixedFee es decimal, ej: 0.5 -> 5, por eso se divide por 10
         } else if (amountUsdt >= 50 && amountUsdt < 100) {
             // Escala 2
             return (amount * scale2Percent) / 10000;
@@ -446,7 +446,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     // Setters onlyOwner para cada escala
     function setScale1FixedFee(uint256 value) external onlyOwner {
-        require(value <= 5 * 10 ** 17, "Scale1FixedFee must be <= 0.5 token");
+        require(value <= 5, "Scale1FixedFee must be <= 0.5 token");
         scale1FixedFee = value;
     }
     function setScale2Percent(uint16 value) external onlyOwner {
