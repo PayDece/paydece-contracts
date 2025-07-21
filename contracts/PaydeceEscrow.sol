@@ -417,7 +417,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         
         // Si alguno es merchant, aplica el fee merchant (0.25%)
         if (isMerchant) {
-            return (amount * 25) / 10000;
+            return (amount * merchantVerifiedPercent) / 10000;
         }
         // Escalas para el resto (rangos continuos)
         uint256 amountUsdt = amount / usdtDecimals;
