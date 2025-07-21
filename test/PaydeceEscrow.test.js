@@ -152,12 +152,27 @@ describe("PaydeceEscrow", function () {
   });
 
   describe("releaseEscrow", function () {
-    it("should release the escrow when status is not APPEAL", async function () {
+    it("should release the escrow when status is FIATCOIN_TRANSFERED", async function () {
       const orderId = 123;
       const value = ethers.utils.parseEther("10");
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
       // El estado es FIATCOIN_TRANSFERED
+      const balanceBefore = await token.balanceOf(receiver.address);
+      await paydeceEscrow.connect(sender).releaseEscrow(orderId);
+      const escrow = await paydeceEscrow.escrows(orderId);
+      expect(escrow.status).to.equal(4); // COMPLETED
+      const feeAmountReceiver = escrow.receiverFee;
+      const balanceAfter = await token.balanceOf(receiver.address);
+      expect(balanceAfter.sub(balanceBefore)).to.equal(value.sub(feeAmountReceiver));
+    });
+    it("should release the escrow when status is CRYPTOS_IN_CUSTODY", async function () {
+      const orderId = 124;
+      const value = ethers.utils.parseEther("10");
+      await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
+      // El estado es CRYPTOS_IN_CUSTODY (2) - Taker NO ha marcado como pagado
+      const escrowBefore = await paydeceEscrow.escrows(orderId);
+      expect(escrowBefore.status).to.equal(2); // CRYPTOS_IN_CUSTODY
       const balanceBefore = await token.balanceOf(receiver.address);
       await paydeceEscrow.connect(sender).releaseEscrow(orderId);
       const escrow = await paydeceEscrow.escrows(orderId);
@@ -174,14 +189,23 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
       await expect(
         paydeceEscrow.connect(sender).releaseEscrow(orderId)
-      ).to.be.revertedWith("Status must NOT be APPEAL");
+      ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
+    });
+    it("should fail if status is COMPLETED", async function () {
+      const orderId = 778;
+      const value = ethers.utils.parseEther("1");
+      await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
+      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
+      await paydeceEscrow.connect(sender).releaseEscrow(orderId);
+      // Ahora está en COMPLETED, intentar de nuevo debe fallar
+      await expect(
+        paydeceEscrow.connect(sender).releaseEscrow(orderId)
+      ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
     });
     it("should fail if not called by the sender (onlySender branch)", async function () {
       const orderId = 2;
       const value = ethers.utils.parseEther("10");
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
-      await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
-      await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
       await expect(
         paydeceEscrow.connect(receiver).releaseEscrow(orderId)
       ).to.be.revertedWith("Only Sender can call this");
@@ -191,7 +215,6 @@ describe("PaydeceEscrow", function () {
       const value = ethers.utils.parseUnits("10", 18);
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
-      // No debe estar en APPEAL
       await expect(paydeceEscrow.connect(sender).releaseEscrow(orderId))
           .to.emit(paydeceEscrow, "EscrowComplete");
     });
@@ -380,7 +403,7 @@ describe("PaydeceEscrow", function () {
       // Ahora el estado es APPEAL, releaseEscrow debe fallar
       await expect(
         paydeceEscrow.connect(sender).releaseEscrow(orderId)
-      ).to.be.revertedWith("Status must NOT be APPEAL");
+      ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
       // cancelSender debe seguir fallando por estado
       await expect(
         paydeceEscrow.connect(sender).cancelSender(orderId)
@@ -595,7 +618,7 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
       await expect(
         paydeceEscrow.connect(sender).releaseEscrow(orderId)
-      ).to.be.revertedWith("Status must NOT be APPEAL");
+      ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
     });
   });
 
@@ -609,7 +632,7 @@ describe("PaydeceEscrow", function () {
       // Ahora el estado es APPEAL, releaseEscrow debe fallar
       await expect(
         paydeceEscrow.connect(sender).releaseEscrow(orderId)
-      ).to.be.revertedWith("Status must NOT be APPEAL");
+      ).to.be.revertedWith("Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED");
       // setMarkAsPaid debe seguir fallando por estado
       await expect(
         paydeceEscrow.connect(receiver).setMarkAsPaid(orderId)

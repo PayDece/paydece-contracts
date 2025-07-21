@@ -51,7 +51,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     /// @notice Enumeration of possible escrow statuses
     enum EscrowStatus {
-        Unknown,               // 0 - Initial state
+        Unknown,              // 0 - Initial state
         ACTIVE,               // 1 - Active escrow
         CRYPTOS_IN_CUSTODY,   // 2 - Cryptos deposited in escrow
         FIATCOIN_TRANSFERED,  // 3 - Fiat payment confirmed by receiver
@@ -268,10 +268,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     /// @notice Releases escrow funds to receiver (sender only)
-    /// @dev Only callable by sender when escrow is not under appeal
+    /// @dev Only callable by sender when escrow is in CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED
     /// @param _orderId The unique identifier of the escrow transaction
     function releaseEscrow(uint _orderId) external onlySender(_orderId) {
-        require(escrows[_orderId].status != EscrowStatus.APPEAL, "Status must NOT be APPEAL");
+        require(
+            escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY ||
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
+            "Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED"
+        );
         _releaseEscrow(_orderId,false);
     }
 
