@@ -73,6 +73,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event DelStablesAddressesEvent(address addressStable);
     event EscrowAppealSender(uint indexed orderId, Escrow escrow);
     event EscrowAppealReceiver(uint indexed orderId, Escrow escrow);
+    event FeesWithdrawn(IERC20 indexed currency, uint256 amount, address indexed to);
+    event Scale1FixedFeeUpdated(uint256 oldValue, uint256 newValue);
+    event Scale2PercentUpdated(uint16 oldValue, uint16 newValue);
+    event Scale3PercentUpdated(uint16 oldValue, uint16 newValue);
+    event Scale4PercentUpdated(uint16 oldValue, uint16 newValue);
+    event Scale5PercentUpdated(uint16 oldValue, uint16 newValue);
+    event Scale6PercentUpdated(uint16 oldValue, uint16 newValue);
+    event MerchantVerifiedPercentUpdated(uint16 oldValue, uint16 newValue);
 
     /**
      * @notice  modifier only the Sender
@@ -225,6 +233,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         }
 
         _currency.safeTransfer(owner(), _amount);
+        
+        emit FeesWithdrawn(_currency, _amount, owner());
     }
 
     /**
@@ -447,27 +457,39 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     // Setters onlyOwner para cada escala
     function setScale1FixedFee(uint256 value) external onlyOwner {
         require(value <= 5 * 10 ** 17, "Scale1FixedFee must be <= 0.5 token");
+        uint256 oldValue = scale1FixedFee;
         scale1FixedFee = value;
+        emit Scale1FixedFeeUpdated(oldValue, value);
     }
     function setScale2Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale2Percent must be <= 2% (200)");
+        uint16 oldValue = scale2Percent;
         scale2Percent = value;
+        emit Scale2PercentUpdated(oldValue, value);
     }
     function setScale3Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale3Percent must be <= 2% (200)");
+        uint16 oldValue = scale3Percent;
         scale3Percent = value;
+        emit Scale3PercentUpdated(oldValue, value);
     }
     function setScale4Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale4Percent must be <= 2% (200)");
+        uint16 oldValue = scale4Percent;
         scale4Percent = value;
+        emit Scale4PercentUpdated(oldValue, value);
     }
     function setScale5Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale5Percent must be <= 2% (200)");
+        uint16 oldValue = scale5Percent;
         scale5Percent = value;
+        emit Scale5PercentUpdated(oldValue, value);
     }
     function setScale6Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale6Percent must be <= 2% (200)");
+        uint16 oldValue = scale6Percent;
         scale6Percent = value;
+        emit Scale6PercentUpdated(oldValue, value);
     }
 
     
@@ -477,7 +499,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      */
     function setMerchantVerifiedPercent(uint16 value) external onlyOwner {
         require(value <= 200, "MerchantVerifiedPercent must be <= 2% (200)");
+        uint16 oldValue = merchantVerifiedPercent;
         merchantVerifiedPercent = value;
+        emit MerchantVerifiedPercentUpdated(oldValue, value);
     }
 
     /// @notice Exponer el cálculo de fee para testing y frontends
