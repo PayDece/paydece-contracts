@@ -56,6 +56,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 created;
         bool isSenderMerchant;
         bool isReceiverMerchant;
+        uint256 escrowTimeProcess; // Time process value stored at escrow creation
     }
 
     // Mappings para campos secundarios
@@ -166,6 +167,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         e.created = block.timestamp;
         e.isSenderMerchant = isSenderMerchant;
         e.isReceiverMerchant = isReceiverMerchant;
+        e.escrowTimeProcess = timeProcess;
         // Guardar campos secundarios en mappings
         escrowAppeals[orderId] = Appeal(false, false, 0);
         emit EscrowDeposit(orderId, escrows[orderId]);
@@ -271,7 +273,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
         );
-        require((block.timestamp - escrows[_orderId].created) > timeProcess, "Time is still running out.");
+        require((block.timestamp - escrows[_orderId].created) > escrows[_orderId].escrowTimeProcess, "Time is still running out.");
         escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
         uint256 _amountFeeSender = escrows[_orderId].senderfee;
         
