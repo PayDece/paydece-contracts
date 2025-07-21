@@ -228,7 +228,7 @@ describe("PaydeceEscrow Extra Flow", function () {
   it("should fail to withdraw fees if there are no fees available", async function () {
     await expect(
       paydeceEscrow.connect(owner).withdrawFees(usdt.address)
-    ).to.be.revertedWith("Amount > feesAvailable");
+    ).to.be.revertedWith("No fees available for withdrawal");
   });
 
   it("should handle sender as merchant and receiver as non-merchant, and check balances and fees", async function () {

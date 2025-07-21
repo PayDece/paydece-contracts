@@ -213,18 +213,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
      * @param   _currency  .
      */
     function withdrawFees(IERC20 _currency) external onlyOwner {
-        uint _amount;
+        uint256 available = feesAvailable[_currency];
+        require(available > 0, "No fees available for withdrawal");
 
-        // This check also prevents underflow
-        require(feesAvailable[_currency] > 0, "Amount > feesAvailable");
-
-        _amount = feesAvailable[_currency];
-
-        if(_amount>0){
-            feesAvailable[_currency] -= _amount;
-        }
-
-        _currency.safeTransfer(owner(), _amount);
+        feesAvailable[_currency] = 0;
+        _currency.safeTransfer(owner(), available);
     }
 
     /**

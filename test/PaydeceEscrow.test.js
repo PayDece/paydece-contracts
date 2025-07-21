@@ -437,7 +437,7 @@ describe("PaydeceEscrow", function () {
       
       await expect(
         paydeceEscrow.connect(owner).withdrawFees(token.address)
-      ).to.be.revertedWith("Amount > feesAvailable");
+      ).to.be.revertedWith("No fees available for withdrawal");
     });
 
     it("should fail if not called by the owner", async function () {
@@ -550,7 +550,7 @@ describe("PaydeceEscrow", function () {
       await token2.deployed();
       await expect(
         paydeceEscrow.connect(owner).withdrawFees(token2.address)
-      ).to.be.revertedWith("Amount > feesAvailable");
+      ).to.be.revertedWith("No fees available for withdrawal");
     });
     it("should not allow addStablesAddresses by non-owner", async function () {
       const Token = await ethers.getContractFactory("USDTToken");
@@ -1351,7 +1351,7 @@ describe("PaydeceEscrow", function () {
       const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
       const paydeceEscrowLocal = await PaydeceEscrow.deploy();
       await paydeceEscrowLocal.deployed();
-      await expect(paydeceEscrowLocal.connect(owner).withdrawFees(tokenLocal.address)).to.be.revertedWith("Amount > feesAvailable");
+      await expect(paydeceEscrowLocal.connect(owner).withdrawFees(tokenLocal.address)).to.be.revertedWith("No fees available for withdrawal");
     });
     it("should revert releaseEscrowOwner if status is not APPEAL", async function () {
       const orderId = 9006;
