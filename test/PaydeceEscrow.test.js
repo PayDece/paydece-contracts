@@ -162,7 +162,7 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(sender).releaseEscrow(orderId);
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.status).to.equal(4); // COMPLETED
-      const feeAmountReceiver = escrow.receiverfee;
+      const feeAmountReceiver = escrow.receiverFee;
       const balanceAfter = await token.balanceOf(receiver.address);
       expect(balanceAfter.sub(balanceBefore)).to.equal(value.sub(feeAmountReceiver));
     });
@@ -312,7 +312,7 @@ describe("PaydeceEscrow", function () {
       const escrow = await paydeceEscrow.escrows(orderId);
       const senderBalanceAfter = await token.balanceOf(sender.address);
       expect(escrow.status).to.equal(EscrowStatus.CANCEL_RECEIVER); // CANCEL_RECEIVER
-      expect(senderBalanceAfter.sub(senderBalanceBefore)).to.equal(value.add(escrow.receiverfee));
+      expect(senderBalanceAfter.sub(senderBalanceBefore)).to.equal(value.add(escrow.receiverFee));
     });
 
     it("should cancel the escrow by the receiver in FIATCOIN_TRANSFERED", async function () {
@@ -325,7 +325,7 @@ describe("PaydeceEscrow", function () {
       const escrow = await paydeceEscrow.escrows(orderId);
       const senderBalanceAfter = await token.balanceOf(sender.address);
       expect(escrow.status).to.equal(EscrowStatus.CANCEL_RECEIVER); // CANCEL_RECEIVER
-      expect(senderBalanceAfter.sub(senderBalanceBefore)).to.equal(value.add(escrow.receiverfee));
+      expect(senderBalanceAfter.sub(senderBalanceBefore)).to.equal(value.add(escrow.receiverFee));
     });
 
     it("should fail if not called by the receiver", async function () {
@@ -642,8 +642,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 1.25% fee for scale 2 lower bound (50 USDC)", async function () {
       const orderId = 1201;
@@ -661,8 +661,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 1.25% fee for scale 2 upper bound (99.99 USDC)", async function () {
       const orderId = 1202;
@@ -680,8 +680,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 1% fee for scale 3 lower bound (100 USDC)", async function () {
       const orderId = 1203;
@@ -699,8 +699,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 1% fee for scale 3 upper bound (999.99 USDC)", async function () {
       const orderId = 1204;
@@ -718,8 +718,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.75% fee for scale 4 lower bound (1000 USDC)", async function () {
       const orderId = 1205;
@@ -737,8 +737,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.75% fee for scale 4 upper bound (4999.99 USDC)", async function () {
       const orderId = 1206;
@@ -756,8 +756,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.5% fee for scale 5 lower bound (5000 USDC)", async function () {
       const orderId = 1207;
@@ -775,8 +775,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.5% fee for scale 5 upper bound (9999.99 USDC)", async function () {
       const orderId = 1208;
@@ -794,8 +794,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.25% fee for scale 6 lower bound (10000 USDC)", async function () {
       const orderId = 1209;
@@ -813,8 +813,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 1.25% fee for scale 2 mid value (75 USDC)", async function () {
       const orderId = 1300;
@@ -832,8 +832,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 1% fee for scale 3 mid value (500 USDC)", async function () {
       const orderId = 1301;
@@ -851,8 +851,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.75% fee for scale 4 mid value (2000 USDC)", async function () {
       const orderId = 1302;
@@ -870,8 +870,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.5% fee for scale 5 mid value (7500 USDC)", async function () {
       const orderId = 1303;
@@ -889,8 +889,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply 0.25% fee for scale 6 mid value (20000 USDC)", async function () {
       const orderId = 1304;
@@ -908,8 +908,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should return merchant fee when isSenderMerchant is true", async function () {
       const value = ethers.utils.parseUnits("1000", 18);
@@ -942,8 +942,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply merchantVerifiedPercent fee if receiver is verified merchant", async function () {
       const orderId = 2002;
@@ -965,8 +965,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should apply merchantVerifiedPercent fee if both are verified merchants", async function () {
       const orderId = 2003;
@@ -987,8 +987,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });
     it("should allow owner to change merchantVerifiedPercent and apply new fee", async function () {
       const orderId = 2004;
@@ -1010,8 +1010,8 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(feeAmountSender);
-      expect(escrow.receiverfee).to.equal(feeAmountReceiver);
+      expect(escrow.senderFee).to.equal(feeAmountSender);
+      expect(escrow.receiverFee).to.equal(feeAmountReceiver);
     });    
   });
 
@@ -1031,7 +1031,7 @@ describe("PaydeceEscrow", function () {
         false
       );
       const escrow = await paydeceEscrow.escrows(orderId);
-      expect(escrow.senderfee).to.equal(expectedFee);
+      expect(escrow.senderFee).to.equal(expectedFee);
       expect(expectedFee).to.equal(0);
       // Los campos isSenderMerchant/isReceiverMerchant no existen en la struct, así que no se pueden testear aquí
     });
