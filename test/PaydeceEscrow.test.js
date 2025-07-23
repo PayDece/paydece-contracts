@@ -1057,6 +1057,10 @@ describe("PaydeceEscrow", function () {
       const orderId = 2004;
       const value = ethers.utils.parseUnits("1000", 18); // 1000 USDC
       
+      // First set higher scales to be >= 100 to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale4Percent(100); // 1%
+      await paydeceEscrow.connect(owner).setScale5Percent(100); // 1%
+      await paydeceEscrow.connect(owner).setScale6Percent(100); // 1%
       await paydeceEscrow.connect(owner).setMerchantVerifiedPercent(100); // 1%
       const merchantVerifiedPercent = await paydeceEscrow.merchantVerifiedPercent();
       const expectedFee = value.mul(merchantVerifiedPercent).div(10000);
@@ -1255,18 +1259,32 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(sender).setScale2Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should allow only the owner to set scale3Percent", async function () {
+      // First set higher scales to 200 to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale3Percent(200)).to.not.be.reverted;
       await expect(paydeceEscrow.connect(sender).setScale3Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should allow only the owner to set scale4Percent", async function () {
+      // First set higher scales to 200 to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
+      await paydeceEscrow.connect(owner).setScale3Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale4Percent(200)).to.not.be.reverted;
       await expect(paydeceEscrow.connect(sender).setScale4Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should allow only the owner to set scale5Percent", async function () {
+      // First set higher scales to 200 to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
+      await paydeceEscrow.connect(owner).setScale3Percent(200);
+      await paydeceEscrow.connect(owner).setScale4Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale5Percent(200)).to.not.be.reverted;
       await expect(paydeceEscrow.connect(sender).setScale5Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should allow only the owner to set scale6Percent", async function () {
+      // First set higher scales to 200 to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
+      await paydeceEscrow.connect(owner).setScale3Percent(200);
+      await paydeceEscrow.connect(owner).setScale4Percent(200);
+      await paydeceEscrow.connect(owner).setScale5Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale6Percent(200)).to.not.be.reverted;
       await expect(paydeceEscrow.connect(sender).setScale6Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
     });
@@ -1291,6 +1309,12 @@ describe("PaydeceEscrow", function () {
       expect(await paydeceEscrow.scale2Percent()).to.equal(200);
     });
     it("should allow scale2Percent = 0", async function () {
+      // First set all subsequent scales to 0 to respect hierarchy, including merchant percent
+      await paydeceEscrow.connect(owner).setMerchantVerifiedPercent(0);
+      await paydeceEscrow.connect(owner).setScale6Percent(0);
+      await paydeceEscrow.connect(owner).setScale5Percent(0);
+      await paydeceEscrow.connect(owner).setScale4Percent(0);
+      await paydeceEscrow.connect(owner).setScale3Percent(0);
       await paydeceEscrow.connect(owner).setScale2Percent(0);
       expect(await paydeceEscrow.scale2Percent()).to.equal(0);
     });
@@ -1298,10 +1322,17 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.revertedWith("Scale3Percent must be <= 2% (200)");
     });
     it("should allow scale3Percent = 2%", async function () {
+      // First set higher scales to 2% to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
       await paydeceEscrow.connect(owner).setScale3Percent(200);
       expect(await paydeceEscrow.scale3Percent()).to.equal(200);
     });
     it("should allow scale3Percent = 0", async function () {
+      // First set all subsequent scales to 0 to respect hierarchy, including merchant percent
+      await paydeceEscrow.connect(owner).setMerchantVerifiedPercent(0);
+      await paydeceEscrow.connect(owner).setScale6Percent(0);
+      await paydeceEscrow.connect(owner).setScale5Percent(0);
+      await paydeceEscrow.connect(owner).setScale4Percent(0);
       await paydeceEscrow.connect(owner).setScale3Percent(0);
       expect(await paydeceEscrow.scale3Percent()).to.equal(0);
     });
@@ -1309,10 +1340,17 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.revertedWith("Scale4Percent must be <= 2% (200)");
     });
     it("should allow scale4Percent = 2%", async function () {
+      // First set higher scales to 2% to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
+      await paydeceEscrow.connect(owner).setScale3Percent(200);
       await paydeceEscrow.connect(owner).setScale4Percent(200);
       expect(await paydeceEscrow.scale4Percent()).to.equal(200);
     });
     it("should allow scale4Percent = 0", async function () {
+      // First set all subsequent scales to 0 to respect hierarchy, including merchant percent
+      await paydeceEscrow.connect(owner).setMerchantVerifiedPercent(0);
+      await paydeceEscrow.connect(owner).setScale6Percent(0);
+      await paydeceEscrow.connect(owner).setScale5Percent(0);
       await paydeceEscrow.connect(owner).setScale4Percent(0);
       expect(await paydeceEscrow.scale4Percent()).to.equal(0);
     });
@@ -1320,10 +1358,17 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.revertedWith("Scale5Percent must be <= 2% (200)");
     });
     it("should allow scale5Percent = 2%", async function () {
+      // First set higher scales to 2% to respect hierarchy
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
+      await paydeceEscrow.connect(owner).setScale3Percent(200);
+      await paydeceEscrow.connect(owner).setScale4Percent(200);
       await paydeceEscrow.connect(owner).setScale5Percent(200);
       expect(await paydeceEscrow.scale5Percent()).to.equal(200);
     });
     it("should allow scale5Percent = 0", async function () {
+      // First set all subsequent scales to 0 to respect hierarchy, including merchant percent
+      await paydeceEscrow.connect(owner).setMerchantVerifiedPercent(0);
+      await paydeceEscrow.connect(owner).setScale6Percent(0);
       await paydeceEscrow.connect(owner).setScale5Percent(0);
       expect(await paydeceEscrow.scale5Percent()).to.equal(0);
     });
@@ -1331,10 +1376,18 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.revertedWith("Scale6Percent must be <= 2% (200)");
     });
     it("should allow scale6Percent = 2%", async function () {
+      // First set higher scales to 2% to respect hierarchy, then merchant and scale6
+      await paydeceEscrow.connect(owner).setScale2Percent(200);
+      await paydeceEscrow.connect(owner).setScale3Percent(200);
+      await paydeceEscrow.connect(owner).setScale4Percent(200);
+      await paydeceEscrow.connect(owner).setScale5Percent(200);
       await paydeceEscrow.connect(owner).setScale6Percent(200);
+      await paydeceEscrow.connect(owner).setMerchantVerifiedPercent(200);
       expect(await paydeceEscrow.scale6Percent()).to.equal(200);
     });
     it("should allow scale6Percent = 0", async function () {
+      // First set merchant percent to 0, then scale6Percent to 0 (hierarchy constraint)
+      await paydeceEscrow.connect(owner).setMerchantVerifiedPercent(0);
       await paydeceEscrow.connect(owner).setScale6Percent(0);
       expect(await paydeceEscrow.scale6Percent()).to.equal(0);
     });

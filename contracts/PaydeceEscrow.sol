@@ -521,6 +521,22 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         return 0;
     }
 
+    function _validateFeeHierarchy(
+    uint16 _scale2,
+    uint16 _scale3,
+    uint16 _scale4,
+    uint16 _scale5,
+    uint16 _scale6,
+    uint16 _merchant
+) internal pure {
+    require(_scale2 >= _scale3, "Scale2 must be >= Scale3");
+    require(_scale3 >= _scale4, "Scale3 must be >= Scale4");
+    require(_scale4 >= _scale5, "Scale4 must be >= Scale5");
+    require(_scale5 >= _scale6, "Scale5 must be >= Scale6");
+    require(_scale6 >= _merchant, "Scale6 must be >= MerchantPercent");
+    require(_scale5 >= _merchant, "Scale5 must be >= MerchantPercent");
+}
+
     /// @notice Sets the fixed fee for scale 1 transactions (1-50 USDT)
     /// @dev Only callable by owner, must be <= 5 (representing 0.5 tokens)
     /// @param value New fixed fee value (0.5 token = 5)
@@ -535,6 +551,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (125 = 1.25%)
     function setScale2Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale2Percent must be <= 2% (200)");
+        _validateFeeHierarchy(value, scale3Percent, scale4Percent, scale5Percent, scale6Percent, merchantVerifiedPercent);
         uint16 oldValue = scale2Percent;
         scale2Percent = value;
         emit Scale2PercentUpdated(oldValue, value);
@@ -544,6 +561,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (100 = 1%)
     function setScale3Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale3Percent must be <= 2% (200)");
+        _validateFeeHierarchy(scale2Percent, value, scale4Percent, scale5Percent, scale6Percent, merchantVerifiedPercent);
         uint16 oldValue = scale3Percent;
         scale3Percent = value;
         emit Scale3PercentUpdated(oldValue, value);
@@ -553,6 +571,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (75 = 0.75%)
     function setScale4Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale4Percent must be <= 2% (200)");
+        _validateFeeHierarchy(scale2Percent, scale3Percent, value, scale5Percent, scale6Percent, merchantVerifiedPercent);
         uint16 oldValue = scale4Percent;
         scale4Percent = value;
         emit Scale4PercentUpdated(oldValue, value);
@@ -562,6 +581,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (50 = 0.5%)
     function setScale5Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale5Percent must be <= 2% (200)");
+        _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, value, scale6Percent, merchantVerifiedPercent);
         uint16 oldValue = scale5Percent;
         scale5Percent = value;
         emit Scale5PercentUpdated(oldValue, value);
@@ -571,6 +591,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (25 = 0.25%)
     function setScale6Percent(uint16 value) external onlyOwner {
         require(value <= 200, "Scale6Percent must be <= 2% (200)");
+        _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, scale5Percent, value, merchantVerifiedPercent);
         uint16 oldValue = scale6Percent;
         scale6Percent = value;
         emit Scale6PercentUpdated(oldValue, value);
@@ -582,6 +603,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (25 = 0.25%)
     function setMerchantVerifiedPercent(uint16 value) external onlyOwner {
         require(value <= 200, "MerchantVerifiedPercent must be <= 2% (200)");
+        _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, scale5Percent, scale6Percent, value);
         uint16 oldValue = merchantVerifiedPercent;
         merchantVerifiedPercent = value;
         emit MerchantVerifiedPercentUpdated(oldValue, value);
