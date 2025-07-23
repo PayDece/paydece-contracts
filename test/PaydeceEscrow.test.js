@@ -233,18 +233,18 @@ describe("PaydeceEscrow", function () {
       //   escrowTimeProcess: escrowData.escrowTimeProcess?.toString(),
       // });
       const feeAmountReceiver = escrowData.receiverFee;
-      console.log("feeAmountReceiver", feeAmountReceiver?.toString());
+      // console.log("feeAmountReceiver", feeAmountReceiver?.toString());
       const expectedPayout = value.sub(feeAmountReceiver);
-      console.log("expectedPayout", expectedPayout.toString());
+      // console.log("expectedPayout", expectedPayout.toString());
     
       // First call - legitimate release
       await paydeceEscrow.connect(sender).releaseEscrow(orderId);
       let receiverBalance = await token.balanceOf(receiver.address);
       let contractBalance = await token.balanceOf(paydeceEscrow.address);
       let escrowStatus = await paydeceEscrow.getState(orderId);
-      console.log("receiverBalance", receiverBalance.toString());
-      console.log("contractBalance", contractBalance.toString());
-      console.log("escrowStatus", escrowStatus);
+      // console.log("receiverBalance", receiverBalance.toString());
+      // console.log("contractBalance", contractBalance.toString());
+      // console.log("escrowStatus", escrowStatus);
       // Verify first release worked correctly
       expect(receiverBalanceBefore.add(receiverBalance)).to.equal(expectedPayout);
       expect(escrowStatus).to.equal(EscrowStatus.COMPLETED);
@@ -454,8 +454,8 @@ describe("PaydeceEscrow", function () {
       const orderId = 8888;
       const value = ethers.utils.parseEther("1");
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
-      // set timeProcess to a high value
-      await paydeceEscrow.connect(owner).setTimeProcess(1000000);
+      // set timeProcess to maximum allowed value (2 days = 172800 seconds)
+      await paydeceEscrow.connect(owner).setTimeProcess(172800);
       await expect(
         paydeceEscrow.connect(sender).cancelSender(orderId)
       ).to.be.revertedWith("Time is still running out.");
@@ -538,7 +538,7 @@ describe("PaydeceEscrow", function () {
       // Attempt to set the time process by someone other than the owner
       await expect(
         paydeceEscrow.connect(owner).setTimeProcess(newTimeProcess)
-      ).to.be.revertedWith("The timeProcess must be greater than 0");
+      ).to.be.revertedWith("timeProcess must be >= 15 minutes");
     });
   });
 
@@ -605,7 +605,7 @@ describe("PaydeceEscrow", function () {
     it("should not allow setTimeProcess to 0", async function () {
       await expect(
         paydeceEscrow.connect(owner).setTimeProcess(0)
-      ).to.be.revertedWith("The timeProcess must be greater than 0");
+      ).to.be.revertedWith("timeProcess must be >= 15 minutes");
     });
     it("should not allow withdrawFees if no fees", async function () {
       const Token = await ethers.getContractFactory("USDTToken");

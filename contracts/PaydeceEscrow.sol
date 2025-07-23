@@ -202,7 +202,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @dev Only callable by contract owner, must be greater than 0
     /// @param _timeProcess Time limit in seconds for completing escrow transactions
     function setTimeProcess(uint256 _timeProcess) external onlyOwner {
-        require(_timeProcess > 0, "The timeProcess must be greater than 0");
+        require(_timeProcess >= 15 * 60, "timeProcess must be >= 15 minutes");
+        require(_timeProcess <= 2 * 24 * 60 * 60, "timeProcess must be <= 2 days");
         timeProcess = _timeProcess;
         emit SetTimeProcessEvent(timeProcess);
     }
