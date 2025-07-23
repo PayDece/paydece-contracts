@@ -273,8 +273,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     function releaseEscrow(uint _orderId) external onlySender(_orderId) {
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY ||
-            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
-            "Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED"
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED ||
+            escrows[_orderId].status == EscrowStatus.APPEAL,
+            "Status must be CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED or APPEAL"
         );
         _releaseEscrow(_orderId,false);
     }
