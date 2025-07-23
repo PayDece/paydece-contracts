@@ -1707,6 +1707,20 @@ describe("PaydeceEscrow", function () {
         await expect(paydeceEscrow.connect(owner).withdrawFees(token.address)).to.not.be.reverted;
     });
   });
+
+  describe("renounceOwnership", function () {
+    it("should revert with 'RenounceOwnership is disabled' when called by owner", async function () {
+      await expect(
+        paydeceEscrow.renounceOwnership()
+      ).to.be.revertedWith("RenounceOwnership is disabled");
+    });
+
+    it("should revert if called by non-owner", async function () {
+      await expect(
+        paydeceEscrow.connect(sender).renounceOwnership()
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
 });
 
 // Utilidad para crear escrow con token

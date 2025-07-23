@@ -597,5 +597,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         return _calculateFee(amount, currency, isMerchant);
     }
 
+    function renounceOwnership() public view override onlyOwner {
+        revert("RenounceOwnership is disabled");
+    }
+
     // ================== End Private functions ==================
 }
