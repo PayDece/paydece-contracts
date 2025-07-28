@@ -69,9 +69,7 @@ describe("PaydeceEscrow", function () {
           orderId,
           ethers.constants.AddressZero,
           value,
-          token.address,
-          false,
-          false
+          token.address
         )
       ).to.be.revertedWith("The address receiver cannot be empty");
     });
@@ -85,9 +83,7 @@ describe("PaydeceEscrow", function () {
             orderId,
           receiver.address,
             value,
-          token.address,
-          false,
-          false
+          token.address
           )
       ).to.be.revertedWith("Escrow already exists");
     });
@@ -102,9 +98,7 @@ describe("PaydeceEscrow", function () {
           orderId,
           sender.address,
           value,
-          token.address,
-          false,
-          false
+          token.address
         )
       ).to.be.revertedWith("Receiver cannot be the same as sender");
     });
@@ -119,9 +113,7 @@ describe("PaydeceEscrow", function () {
           orderId,
           receiver.address,
           value,
-          token.address,
-          false,
-          false
+          token.address
         )
       ).to.be.revertedWith("The parameter value cannot be zero");
     });
@@ -135,10 +127,10 @@ describe("PaydeceEscrow", function () {
     //   await token.transfer(sender.address, value.add(fee));
 
     //   await token.connect(sender).approve(paydeceEscrow.address, value.add(fee));
-    // //   await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false))
+    // //   await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address))
     // //      .to.emit(paydeceEscrow, "EscrowDeposit")
     // //      .withArgs(orderId, anyValue);
-    //   await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, true, false);
+    //   await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address);
 
     //   const escrow = await paydeceEscrow.escrows(orderId);
 
@@ -328,7 +320,7 @@ describe("PaydeceEscrow", function () {
       const value = ethers.utils.parseEther("1");
       await failingToken.approve(paydeceEscrow.address, value);
       await expect(
-        paydeceEscrow.connect(owner).createEscrow(orderId, receiver.address, value, failingToken.address, false, false)
+        paydeceEscrow.connect(owner).createEscrow(orderId, receiver.address, value, failingToken.address)
       ).to.be.revertedWith("SafeERC20: ERC20 operation did not succeed");
     });
     it("should revert if status is not APPEAL (branch coverage)", async function () {
@@ -644,9 +636,7 @@ describe("PaydeceEscrow", function () {
           orderId,
           receiver.address,
           value,
-          token2.address,
-          false,
-          false
+          token2.address
         )
       ).to.be.revertedWith("Address Stable to be whitelisted");
     });
@@ -700,9 +690,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -719,9 +707,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -738,9 +724,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -757,9 +741,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -776,9 +758,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -795,9 +775,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -814,9 +792,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -833,9 +809,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -852,9 +826,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -871,9 +843,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -890,9 +860,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -909,9 +877,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -928,9 +894,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -947,9 +911,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -966,9 +928,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -1000,9 +960,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -1023,9 +981,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -1045,9 +1001,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -1072,9 +1026,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(feeAmountSender);
@@ -1093,9 +1045,7 @@ describe("PaydeceEscrow", function () {
         orderId,
         receiver.address,
         value,
-        token.address,
-        false,
-        false
+        token.address
       );
       const escrow = await paydeceEscrow.escrows(orderId);
       expect(escrow.senderFee).to.equal(expectedFee);
@@ -1489,22 +1439,22 @@ describe("PaydeceEscrow", function () {
       await tokenLocal.deployed();
       await tokenLocal.transfer(sender.address, value);
       await tokenLocal.connect(sender).approve(paydeceEscrow.address, value);
-      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, tokenLocal.address, false, false)).to.be.revertedWith("Address Stable to be whitelisted");
+      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, tokenLocal.address)).to.be.revertedWith("Address Stable to be whitelisted");
     });
     it("should revert createEscrow if value is zero", async function () {
       const orderId = 9009;
-      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, 0, token.address, false, false)).to.be.revertedWith("The parameter value cannot be zero");
+      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, 0, token.address)).to.be.revertedWith("The parameter value cannot be zero");
     });
     it("should revert createEscrow if sender = receiver", async function () {
       const orderId = 9010;
       const value = ethers.utils.parseUnits("10", 18);
-      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, sender.address, value, token.address, false, false)).to.be.revertedWith("Receiver cannot be the same as sender");
+      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, sender.address, value, token.address)).to.be.revertedWith("Receiver cannot be the same as sender");
     });
     it("should revert createEscrow if orderId already exists", async function () {
       const orderId = 9011;
       const value = ethers.utils.parseUnits("10", 18);
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
-      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address, false, false)).to.be.revertedWith("Escrow already exists");
+      await expect(paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address)).to.be.revertedWith("Escrow already exists");
     });
     it("should revert onlySender if not sender", async function () {
       const orderId = 9012;
@@ -1774,10 +1724,186 @@ describe("PaydeceEscrow", function () {
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
+
+  describe("setMerchantStatus", function () {
+    it("should set merchant status to true", async function () {
+      await paydeceEscrow.connect(owner).setMerchantStatus(sender.address, true);
+      expect(await paydeceEscrow.isMerchant(sender.address)).to.equal(true);
+    });
+
+    it("should set merchant status to false", async function () {
+      await paydeceEscrow.connect(owner).setMerchantStatus(sender.address, true);
+      await paydeceEscrow.connect(owner).setMerchantStatus(sender.address, false);
+      expect(await paydeceEscrow.isMerchant(sender.address)).to.equal(false);
+    });
+
+    it("should emit MerchantStatusUpdated event", async function () {
+      await expect(paydeceEscrow.connect(owner).setMerchantStatus(sender.address, true))
+        .to.emit(paydeceEscrow, "MerchantStatusUpdated")
+        .withArgs(sender.address, true);
+    });
+
+    it("should fail if not called by owner", async function () {
+      await expect(
+        paydeceEscrow.connect(sender).setMerchantStatus(receiver.address, true)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should fail if user address is zero", async function () {
+      await expect(
+        paydeceEscrow.connect(owner).setMerchantStatus(ethers.constants.AddressZero, true)
+      ).to.be.revertedWith("Invalid address");
+    });
+
+    it("should affect fee calculation for merchants", async function () {
+      const orderId = 8001;
+      const value = ethers.utils.parseUnits("100", 18); // 100 USDC
+      
+      // Set sender as merchant
+      await paydeceEscrow.connect(owner).setMerchantStatus(sender.address, true);
+      
+      // Calculate expected fees
+      const expectedSenderFee = await paydeceEscrow.publicCalculateFee(value, token.address, true); // merchant fee
+      const expectedReceiverFee = await paydeceEscrow.publicCalculateFee(value, token.address, false); // regular fee
+      
+      // Transfer tokens and approve
+      await token.transfer(sender.address, value.add(expectedSenderFee).add(expectedReceiverFee));
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(expectedSenderFee).add(expectedReceiverFee));
+      
+      // Create escrow
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address);
+      
+      // Check fees in the escrow
+      const escrow = await paydeceEscrow.escrows(orderId);
+      expect(escrow.senderFee).to.equal(expectedSenderFee);
+      expect(escrow.receiverFee).to.equal(expectedReceiverFee);
+    });
+  });
+
+  describe("setMerchantStatusBatch", function () {
+    it("should set merchant status for multiple addresses", async function () {
+      const users = [sender.address, receiver.address, addr1.address];
+      const statuses = [true, false, true];
+      
+      await paydeceEscrow.connect(owner).setMerchantStatusBatch(users, statuses);
+      
+      expect(await paydeceEscrow.isMerchant(sender.address)).to.equal(true);
+      expect(await paydeceEscrow.isMerchant(receiver.address)).to.equal(false);
+      expect(await paydeceEscrow.isMerchant(addr1.address)).to.equal(true);
+    });
+
+    it("should emit MerchantStatusUpdated events for all addresses", async function () {
+      const users = [sender.address, receiver.address];
+      const statuses = [true, false];
+      
+      const tx = await paydeceEscrow.connect(owner).setMerchantStatusBatch(users, statuses);
+      
+      await expect(tx)
+        .to.emit(paydeceEscrow, "MerchantStatusUpdated")
+        .withArgs(sender.address, true);
+      
+      await expect(tx)
+        .to.emit(paydeceEscrow, "MerchantStatusUpdated")
+        .withArgs(receiver.address, false);
+    });
+
+    it("should fail if arrays have different lengths", async function () {
+      const users = [sender.address, receiver.address];
+      const statuses = [true]; // Different length
+      
+      await expect(
+        paydeceEscrow.connect(owner).setMerchantStatusBatch(users, statuses)
+      ).to.be.revertedWith("Arrays length mismatch");
+    });
+
+    it("should fail if arrays are empty", async function () {
+      await expect(
+        paydeceEscrow.connect(owner).setMerchantStatusBatch([], [])
+      ).to.be.revertedWith("Empty arrays");
+    });
+
+    it("should fail if any user address is zero", async function () {
+      const users = [sender.address, ethers.constants.AddressZero];
+      const statuses = [true, false];
+      
+      await expect(
+        paydeceEscrow.connect(owner).setMerchantStatusBatch(users, statuses)
+      ).to.be.revertedWith("Invalid address");
+    });
+
+    it("should fail if not called by owner", async function () {
+      const users = [sender.address];
+      const statuses = [true];
+      
+      await expect(
+        paydeceEscrow.connect(sender).setMerchantStatusBatch(users, statuses)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+
+  describe("merchant status integration with escrow creation", function () {
+    it("should apply merchant fees for both sender and receiver when both are merchants", async function () {
+      const orderId = 8002;
+      const value = ethers.utils.parseUnits("100", 18); // 100 USDC
+      
+      // Set both as merchants
+      await paydeceEscrow.connect(owner).setMerchantStatus(sender.address, true);
+      await paydeceEscrow.connect(owner).setMerchantStatus(receiver.address, true);
+      
+      // Calculate expected merchant fees
+      const expectedSenderFee = await paydeceEscrow.publicCalculateFee(value, token.address, true);
+      const expectedReceiverFee = await paydeceEscrow.publicCalculateFee(value, token.address, true);
+      
+      // Transfer tokens and approve
+      await token.transfer(sender.address, value.add(expectedSenderFee).add(expectedReceiverFee));
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(expectedSenderFee).add(expectedReceiverFee));
+      
+      // Create escrow
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address);
+      
+      // Check fees in the escrow
+      const escrow = await paydeceEscrow.escrows(orderId);
+      expect(escrow.senderFee).to.equal(expectedSenderFee);
+      expect(escrow.receiverFee).to.equal(expectedReceiverFee);
+    });
+
+    it("should apply mixed fees when only sender is merchant", async function () {
+      const orderId = 8003;
+      const value = ethers.utils.parseUnits("100", 18); // 100 USDC
+      
+      // Set only sender as merchant
+      await paydeceEscrow.connect(owner).setMerchantStatus(sender.address, true);
+      await paydeceEscrow.connect(owner).setMerchantStatus(receiver.address, false);
+      
+      // Calculate expected fees
+      const expectedSenderFee = await paydeceEscrow.publicCalculateFee(value, token.address, true); // merchant fee
+      const expectedReceiverFee = await paydeceEscrow.publicCalculateFee(value, token.address, false); // regular fee
+      
+      // Transfer tokens and approve
+      await token.transfer(sender.address, value.add(expectedSenderFee).add(expectedReceiverFee));
+      await token.connect(sender).approve(paydeceEscrow.address, value.add(expectedSenderFee).add(expectedReceiverFee));
+      
+      // Create escrow
+      await paydeceEscrow.connect(sender).createEscrow(orderId, receiver.address, value, token.address);
+      
+      // Check fees in the escrow
+      const escrow = await paydeceEscrow.escrows(orderId);
+      expect(escrow.senderFee).to.equal(expectedSenderFee);
+      expect(escrow.receiverFee).to.equal(expectedReceiverFee);
+    });
+  });
 });
 
 // Utilidad para crear escrow con token
-async function createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, isSenderMerchant, isReceiverMerchant) {
+async function createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, isSenderMerchant = false, isReceiverMerchant = false) {
+  // Set merchant status if needed (the new approach)
+  if (isSenderMerchant) {
+    await paydeceEscrow.setMerchantStatus(sender.address, true);
+  }
+  if (isReceiverMerchant) {
+    await paydeceEscrow.setMerchantStatus(receiver.address, true);
+  }
+  
   // Calcular el fee igual que el contrato
   const feeAmountSender = await calculateFee(paydeceEscrow, value, token, isSenderMerchant);
   const feeAmountReceiver = await calculateFee(paydeceEscrow, value, token, isReceiverMerchant);
@@ -1787,9 +1913,7 @@ async function createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, v
     orderId,
     receiver.address,
     value,
-    token.address,
-    isSenderMerchant,
-    isReceiverMerchant
+    token.address
   );
 }
 

@@ -48,6 +48,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     
     /// @notice Mapping of accumulated fees available for withdrawal per token
     mapping(IERC20 => uint) public feesAvailable;
+    
+    /// @notice Mapping to track merchant status for addresses
+    mapping(address => bool) public isMerchant;
 
     /// @notice Enumeration of possible escrow statuses
     enum EscrowStatus {
@@ -161,6 +164,9 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     
     /// @notice Emitted when merchant verified percentage fee is updated
     event MerchantVerifiedPercentUpdated(uint16 oldValue, uint16 newValue);
+    
+    /// @notice Emitted when merchant status is updated for an address
+    event MerchantStatusUpdated(address indexed user, bool status);
 
     /// @notice Modifier to restrict function access to the escrow sender only
     /// @param _orderId The unique identifier of the escrow transaction
@@ -214,15 +220,11 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param receiver Address that will receive the escrowed funds
     /// @param value Amount to be escrowed (in token units)
     /// @param currency ERC20 token contract address for the transaction
-    /// @param isSenderMerchant Whether sender has merchant verification status
-    /// @param isReceiverMerchant Whether receiver has merchant verification status
     function createEscrow(
         uint orderId,
         address payable receiver,
         uint256 value,
-        IERC20 currency,
-        bool isSenderMerchant,
-        bool isReceiverMerchant
+        IERC20 currency
     ) external {
         require(receiver != address(0), "The address receiver cannot be empty");
         require(escrows[orderId].status == EscrowStatus.Unknown,"Escrow already exists");
@@ -232,8 +234,13 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
         require(msg.sender != receiver, "Receiver cannot be the same as sender");
         require(value > 0, "The parameter value cannot be zero");
-        uint256 feeAmountSender = _calculateFee(value, currency, isSenderMerchant);
-        uint256 feeAmountReceiver = _calculateFee(value, currency, isReceiverMerchant);
+        
+        // Determine merchant status from on-chain mapping
+        bool senderIsMerchant = isMerchant[msg.sender];
+        bool receiverIsMerchant = isMerchant[receiver];
+        
+        uint256 feeAmountSender = _calculateFee(value, currency, senderIsMerchant);
+        uint256 feeAmountReceiver = _calculateFee(value, currency, receiverIsMerchant);
         
         currency.safeTransferFrom(
             msg.sender,
@@ -249,8 +256,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         e.currency = currency;
         e.status = EscrowStatus.CRYPTOS_IN_CUSTODY;
         e.created = block.timestamp;
-        e.isSenderMerchant = isSenderMerchant;
-        e.isReceiverMerchant = isReceiverMerchant;
+        e.isSenderMerchant = senderIsMerchant;
+        e.isReceiverMerchant = receiverIsMerchant;
         e.escrowTimeProcess = timeProcess;
         // Save secondary fields in mappings
         escrowAppeals[orderId] = Appeal(false, false, 0);
@@ -486,14 +493,14 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @dev Implements six-tier fee structure with merchant discounts
     /// @param amount Transaction amount in token units
     /// @param currency ERC20 token contract for decimal calculation
-    /// @param isMerchant Whether the party has merchant verification
+    /// @param _isMerchant Whether the party has merchant verification
     /// @return Calculated fee amount in token units
-    function _calculateFee(uint256 amount, IERC20 currency, bool isMerchant) internal view returns (uint256) {
+    function _calculateFee(uint256 amount, IERC20 currency, bool _isMerchant) internal view returns (uint256) {
         uint8 decimals = currency.decimals();
         uint256 usdtDecimals = 10 ** uint256(decimals);
         
         // If merchant verified, apply preferential merchant fee (0.25%)
-        if (isMerchant) {
+        if (_isMerchant) {
             return (amount * merchantVerifiedPercent) / 10000;
         }
         // Fee scales for regular users (continuous ranges)
@@ -704,10 +711,35 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @dev Exposes internal fee calculation logic for external use
     /// @param amount Transaction amount in token units
     /// @param currency ERC20 token contract for decimal calculation  
-    /// @param isMerchant Whether the party has merchant verification
+    /// @param _isMerchant Whether the party has merchant verification
     /// @return Calculated fee amount in token units
-    function publicCalculateFee(uint256 amount, IERC20 currency, bool isMerchant) external view returns (uint256) {
-        return _calculateFee(amount, currency, isMerchant);
+    function publicCalculateFee(uint256 amount, IERC20 currency, bool _isMerchant) external view returns (uint256) {
+        return _calculateFee(amount, currency, _isMerchant);
+    }
+
+    /// @notice Sets or updates merchant status for a specific address
+    /// @dev Only callable by contract owner to ensure proper verification
+    /// @param user Address to update merchant status for
+    /// @param status True to grant merchant status, false to revoke
+    function setMerchantStatus(address user, bool status) external onlyOwner {
+        require(user != address(0), "Invalid address");
+        isMerchant[user] = status;
+        emit MerchantStatusUpdated(user, status);
+    }
+
+    /// @notice Batch update merchant status for multiple addresses
+    /// @dev Only callable by contract owner, optimized for batch operations
+    /// @param users Array of addresses to update
+    /// @param statuses Array of corresponding merchant statuses
+    function setMerchantStatusBatch(address[] calldata users, bool[] calldata statuses) external onlyOwner {
+        require(users.length == statuses.length, "Arrays length mismatch");
+        require(users.length > 0, "Empty arrays");
+        
+        for (uint256 i = 0; i < users.length; i++) {
+            require(users[i] != address(0), "Invalid address");
+            isMerchant[users[i]] = statuses[i];
+            emit MerchantStatusUpdated(users[i], statuses[i]);
+        }
     }
 
     function renounceOwnership() public view override onlyOwner {

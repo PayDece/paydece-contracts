@@ -191,9 +191,7 @@ describe("PaydeceEscrow - Branch Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Cancel should also work with nonReentrant
@@ -219,9 +217,7 @@ describe("PaydeceEscrow - Branch Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       const escrow = await paydeceEscrow.escrows(orderId);
@@ -240,9 +236,7 @@ describe("PaydeceEscrow - Branch Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Mark as paid
@@ -324,9 +318,7 @@ describe("PaydeceEscrow - Branch Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Mark as paid first
@@ -350,9 +342,7 @@ describe("PaydeceEscrow - Branch Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Mark as paid

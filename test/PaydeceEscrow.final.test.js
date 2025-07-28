@@ -100,9 +100,7 @@ describe("PaydeceEscrow - Final Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Fast forward time

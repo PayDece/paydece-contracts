@@ -36,9 +36,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      false,
-      false
+      usdt.address
     );
     // Receiver marks as paid
     await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
@@ -69,9 +67,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      false,
-      false
+      usdt.address
     );
     // Release directamente (sin setMarkAsPaid)
     await paydeceEscrow.connect(sender).releaseEscrow(orderId);
@@ -92,6 +88,10 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 10;
     const value = ethers.utils.parseUnits("100", 18);
 
+    // Set merchant status for both parties
+    await paydeceEscrow.setMerchantStatus(sender.address, true);
+    await paydeceEscrow.setMerchantStatus(receiver.address, true);
+
     // Calcular ambos fees
     const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
     const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
@@ -106,9 +106,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      true,
-      true
+      usdt.address
     );
     // Receiver marks as paid
     await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
@@ -130,6 +128,10 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 11;
     const value = ethers.utils.parseUnits("50", 18);
     
+    // Set merchant status for both parties
+    await paydeceEscrow.setMerchantStatus(sender.address, true);
+    await paydeceEscrow.setMerchantStatus(receiver.address, true);
+
     // Calcular ambos fees
     const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
     const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
@@ -143,9 +145,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      true,
-      true
+      usdt.address
     );
     // Release directamente
     await paydeceEscrow.connect(sender).releaseEscrow(orderId);
@@ -175,9 +175,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      false,
-      false
+      usdt.address
     );
 
     // Intentar cancelar antes de que pase el tiempo
@@ -210,9 +208,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      false,
-      false
+      usdt.address
     );
     await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
     await paydeceEscrow.connect(sender).releaseEscrow(orderId);
@@ -239,6 +235,9 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 100;
     const value = ethers.utils.parseUnits("200", 18);
     
+    // Set merchant status for sender only
+    await paydeceEscrow.setMerchantStatus(sender.address, true);
+
     // Calcular ambos fees
     const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
     const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
@@ -252,9 +251,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      true, // sender merchant
-      false // receiver no merchant
+      usdt.address
     );
     // Receiver marks as paid
     await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
@@ -276,6 +273,9 @@ describe("PaydeceEscrow Extra Flow", function () {
     const orderId = 101;
     const value = ethers.utils.parseUnits("300", 18);
     
+    // Set merchant status for receiver only
+    await paydeceEscrow.setMerchantStatus(receiver.address, true);
+
     // Calcular ambos fees
     const senderfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, false);
     const receiverfee = await paydeceEscrow.publicCalculateFee(value, usdt.address, true);
@@ -289,9 +289,7 @@ describe("PaydeceEscrow Extra Flow", function () {
       orderId,
       receiver.address,
       value,
-      usdt.address,
-      false, // sender no merchant
-      true // receiver merchant
+      usdt.address
     );
     // Receiver marks as paid
     await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);

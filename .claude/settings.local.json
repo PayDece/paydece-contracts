@@ -4,7 +4,9 @@
       "Bash(npm run:*)",
       "Bash(npx hardhat test:*)",
       "Bash(npx hardhat:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm test)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

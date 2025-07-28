@@ -54,9 +54,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
         orderId,
         receiver.address, // EOA address
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       expect((await paydeceEscrow.escrows(orderId)).receiver).to.equal(receiver.address);
@@ -176,9 +174,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Fast forward time
@@ -204,9 +200,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Cancel by receiver should work normally (tests nonReentrant modifier)
@@ -280,9 +274,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Mark as paid
@@ -309,9 +301,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
         orderId,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       // Mark as paid
@@ -329,9 +319,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
         orderId2,
         receiver.address,
         value,
-        usdt.address,
-        false,
-        false
+        usdt.address
       );
       
       await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId2);
