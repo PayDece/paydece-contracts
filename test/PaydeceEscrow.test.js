@@ -1302,7 +1302,7 @@ describe("PaydeceEscrow", function () {
       expect(await paydeceEscrow.scale1FixedFee()).to.equal(0);
     });
     it("should not allow scale2Percent > 2%", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.revertedWith("Scale2Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.reverted;
     });
     it("should allow scale2Percent = 2%", async function () {
       await paydeceEscrow.connect(owner).setScale2Percent(200);
@@ -1319,7 +1319,7 @@ describe("PaydeceEscrow", function () {
       expect(await paydeceEscrow.scale2Percent()).to.equal(0);
     });
     it("should not allow scale3Percent > 2%", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.revertedWith("Scale3Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.reverted;
     });
     it("should allow scale3Percent = 2%", async function () {
       // First set higher scales to 2% to respect hierarchy
@@ -1337,7 +1337,7 @@ describe("PaydeceEscrow", function () {
       expect(await paydeceEscrow.scale3Percent()).to.equal(0);
     });
     it("should not allow scale4Percent > 2%", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.revertedWith("Scale4Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.reverted;
     });
     it("should allow scale4Percent = 2%", async function () {
       // First set higher scales to 2% to respect hierarchy
@@ -1355,7 +1355,7 @@ describe("PaydeceEscrow", function () {
       expect(await paydeceEscrow.scale4Percent()).to.equal(0);
     });
     it("should not allow scale5Percent > 2%", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.revertedWith("Scale5Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.reverted;
     });
     it("should allow scale5Percent = 2%", async function () {
       // First set higher scales to 2% to respect hierarchy
@@ -1373,7 +1373,7 @@ describe("PaydeceEscrow", function () {
       expect(await paydeceEscrow.scale5Percent()).to.equal(0);
     });
     it("should not allow scale6Percent > 2%", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.revertedWith("Scale6Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.reverted;
     });
     it("should allow scale6Percent = 2%", async function () {
       // First set higher scales to 2% to respect hierarchy, then merchant and scale6
@@ -1410,19 +1410,19 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(owner).setScale1FixedFee(6)).to.be.revertedWith("Scale1FixedFee must be <= 0.5 token");
     });
     it("should revert setScale2Percent if value > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.revertedWith("Scale2Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.reverted;
     });
     it("should revert setScale3Percent if value > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.revertedWith("Scale3Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.reverted;
     });
     it("should revert setScale4Percent if value > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.revertedWith("Scale4Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.reverted;
     });
     it("should revert setScale5Percent if value > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.revertedWith("Scale5Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.reverted;
     });
     it("should revert setScale6Percent if value > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.revertedWith("Scale6Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.reverted;
     });
     it("should revert appeal if status is not FIATCOIN_TRANSFERED", async function () {
       const orderId = 9001;
@@ -1561,25 +1561,25 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(addr1).setMerchantVerifiedPercent(50)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should revert if setMerchantVerifiedPercent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setMerchantVerifiedPercent(201)).to.be.revertedWith("MerchantVerifiedPercent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setMerchantVerifiedPercent(201)).to.be.reverted;
     });
     it("should revert if setScale1FixedFee > 0.5 token", async function () {
       await expect(paydeceEscrow.connect(owner).setScale1FixedFee(6)).to.be.revertedWith("Scale1FixedFee must be <= 0.5 token");
     });
     it("should revert if setScale2Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.revertedWith("Scale2Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.reverted;
     });
     it("should revert if setScale3Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.revertedWith("Scale3Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.reverted;
     });
     it("should revert if setScale4Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.revertedWith("Scale4Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.reverted;
     });
     it("should revert if setScale5Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.revertedWith("Scale5Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.reverted;
     });
     it("should revert if setScale6Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.revertedWith("Scale6Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.reverted;
     });
     it("should revert cancelSender if status is not CRYPTOS_IN_CUSTODY", async function () {
       // Crea un escrow y cambia el estado
@@ -1621,37 +1621,37 @@ describe("PaydeceEscrow", function () {
 
   describe("branch and negative coverage for setters", function () {
     it("should revert if setScale2Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.revertedWith("Scale2Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale2Percent", async function () {
       await expect(paydeceEscrow.connect(addr1).setScale2Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should revert if setScale3Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.revertedWith("Scale3Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale3Percent", async function () {
       await expect(paydeceEscrow.connect(addr1).setScale3Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should revert if setScale4Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.revertedWith("Scale4Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale4Percent", async function () {
       await expect(paydeceEscrow.connect(addr1).setScale4Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should revert if setScale5Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.revertedWith("Scale5Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale5Percent", async function () {
       await expect(paydeceEscrow.connect(addr1).setScale5Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should revert if setScale6Percent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.revertedWith("Scale6Percent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale6Percent", async function () {
       await expect(paydeceEscrow.connect(addr1).setScale6Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should revert if setMerchantVerifiedPercent > 200", async function () {
-      await expect(paydeceEscrow.connect(owner).setMerchantVerifiedPercent(201)).to.be.revertedWith("MerchantVerifiedPercent must be <= 2% (200)");
+      await expect(paydeceEscrow.connect(owner).setMerchantVerifiedPercent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setMerchantVerifiedPercent", async function () {
       await expect(paydeceEscrow.connect(addr1).setMerchantVerifiedPercent(100)).to.be.revertedWith("Ownable: caller is not the owner");

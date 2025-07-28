@@ -521,21 +521,60 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         return 0;
     }
 
+    // Custom errors for gas optimization
+    error InvalidFeeHierarchy(uint8 violationType);
+    error InvalidScaleValue();
+    error InvalidScaleId();
+    error ArrayLengthMismatch();
+    error EmptyArray();
+
     function _validateFeeHierarchy(
-    uint16 _scale2,
-    uint16 _scale3,
-    uint16 _scale4,
-    uint16 _scale5,
-    uint16 _scale6,
-    uint16 _merchant
-) internal pure {
-    require(_scale2 >= _scale3, "Scale2 must be >= Scale3");
-    require(_scale3 >= _scale4, "Scale3 must be >= Scale4");
-    require(_scale4 >= _scale5, "Scale4 must be >= Scale5");
-    require(_scale5 >= _scale6, "Scale5 must be >= Scale6");
-    require(_scale6 >= _merchant, "Scale6 must be >= MerchantPercent");
-    require(_scale5 >= _merchant, "Scale5 must be >= MerchantPercent");
-}
+        uint16 _scale2,
+        uint16 _scale3,
+        uint16 _scale4,
+        uint16 _scale5,
+        uint16 _scale6,
+        uint16 _merchant
+    ) internal pure {
+        unchecked {
+            if (_scale2 < _scale3) revert InvalidFeeHierarchy(1);
+            if (_scale3 < _scale4) revert InvalidFeeHierarchy(2);
+            if (_scale4 < _scale5) revert InvalidFeeHierarchy(3);
+            if (_scale5 < _scale6) revert InvalidFeeHierarchy(4);
+            if (_scale6 < _merchant) revert InvalidFeeHierarchy(5);
+            // Removed redundant validation _scale5 >= _merchant
+        }
+    }
+
+    /// @notice Internal function to set scale value and emit event
+    /// @dev Optimized internal function to reduce code duplication
+    /// @param scaleId Scale identifier (2-6)
+    /// @param value New scale value
+    function _setScaleValue(uint8 scaleId, uint16 value) internal {
+        if (scaleId == 2) {
+            uint16 oldValue = scale2Percent;
+            scale2Percent = value;
+            emit Scale2PercentUpdated(oldValue, value);
+        } else if (scaleId == 3) {
+            uint16 oldValue = scale3Percent;
+            scale3Percent = value;
+            emit Scale3PercentUpdated(oldValue, value);
+        } else if (scaleId == 4) {
+            uint16 oldValue = scale4Percent;
+            scale4Percent = value;
+            emit Scale4PercentUpdated(oldValue, value);
+        } else if (scaleId == 5) {
+            uint16 oldValue = scale5Percent;
+            scale5Percent = value;
+            emit Scale5PercentUpdated(oldValue, value);
+        } else if (scaleId == 6) {
+            uint16 oldValue = scale6Percent;
+            scale6Percent = value;
+            emit Scale6PercentUpdated(oldValue, value);
+        } else {
+            revert InvalidScaleId();
+        }
+    }
 
     /// @notice Sets the fixed fee for scale 1 transactions (1-50 USDT)
     /// @dev Only callable by owner, must be <= 5 (representing 0.5 tokens)
@@ -546,55 +585,107 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         scale1FixedFee = value;
         emit Scale1FixedFeeUpdated(oldValue, value);
     }
+    /// @notice Sets all scale percentages in a single transaction
+    /// @dev Only callable by owner, optimized for batch operations
+    /// @param _scale2 Scale 2 percentage (50-100 USDT)
+    /// @param _scale3 Scale 3 percentage (100-1000 USDT)
+    /// @param _scale4 Scale 4 percentage (1000-5000 USDT)
+    /// @param _scale5 Scale 5 percentage (5000-10000 USDT)
+    /// @param _scale6 Scale 6 percentage (10000+ USDT)
+    function setAllScales(
+        uint16 _scale2,
+        uint16 _scale3,
+        uint16 _scale4,
+        uint16 _scale5,
+        uint16 _scale6
+    ) external onlyOwner {
+        if (_scale2 > 200 || _scale3 > 200 || _scale4 > 200 || 
+            _scale5 > 200 || _scale6 > 200) revert InvalidScaleValue();
+            
+        _validateFeeHierarchy(_scale2, _scale3, _scale4, _scale5, _scale6, merchantVerifiedPercent);
+        
+        _setScaleValue(2, _scale2);
+        _setScaleValue(3, _scale3);
+        _setScaleValue(4, _scale4);
+        _setScaleValue(5, _scale5);
+        _setScaleValue(6, _scale6);
+    }
+
+    /// @notice Sets multiple scale percentages selectively
+    /// @dev Only callable by owner, allows partial updates
+    /// @param scaleIds Array of scale IDs to update (2-6)
+    /// @param scaleValues Array of new percentage values
+    function setMultipleScales(
+        uint8[] calldata scaleIds,
+        uint16[] calldata scaleValues
+    ) external onlyOwner {
+        if (scaleIds.length != scaleValues.length) revert ArrayLengthMismatch();
+        if (scaleIds.length == 0) revert EmptyArray();
+        
+        // Create temporary array with current values
+        uint16[5] memory newScales = [
+            scale2Percent, scale3Percent, scale4Percent, 
+            scale5Percent, scale6Percent
+        ];
+        
+        // Apply changes to temporary array and validate inputs
+        for (uint i = 0; i < scaleIds.length; i++) {
+            if (scaleIds[i] < 2 || scaleIds[i] > 6) revert InvalidScaleId();
+            if (scaleValues[i] > 200) revert InvalidScaleValue();
+            newScales[scaleIds[i] - 2] = scaleValues[i];
+        }
+        
+        // Validate complete hierarchy
+        _validateFeeHierarchy(
+            newScales[0], newScales[1], newScales[2], 
+            newScales[3], newScales[4], merchantVerifiedPercent
+        );
+        
+        // Apply changes and emit events
+        for (uint i = 0; i < scaleIds.length; i++) {
+            _setScaleValue(scaleIds[i], scaleValues[i]);
+        }
+    }
+
     /// @notice Sets the percentage fee for scale 2 transactions (50-100 USDT)
     /// @dev Only callable by owner, must be <= 200 basis points (2%)
     /// @param value New percentage fee in basis points (125 = 1.25%)
     function setScale2Percent(uint16 value) external onlyOwner {
-        require(value <= 200, "Scale2Percent must be <= 2% (200)");
+        if (value > 200) revert InvalidScaleValue();
         _validateFeeHierarchy(value, scale3Percent, scale4Percent, scale5Percent, scale6Percent, merchantVerifiedPercent);
-        uint16 oldValue = scale2Percent;
-        scale2Percent = value;
-        emit Scale2PercentUpdated(oldValue, value);
+        _setScaleValue(2, value);
     }
     /// @notice Sets the percentage fee for scale 3 transactions (100-1000 USDT)
     /// @dev Only callable by owner, must be <= 200 basis points (2%)
     /// @param value New percentage fee in basis points (100 = 1%)
     function setScale3Percent(uint16 value) external onlyOwner {
-        require(value <= 200, "Scale3Percent must be <= 2% (200)");
+        if (value > 200) revert InvalidScaleValue();
         _validateFeeHierarchy(scale2Percent, value, scale4Percent, scale5Percent, scale6Percent, merchantVerifiedPercent);
-        uint16 oldValue = scale3Percent;
-        scale3Percent = value;
-        emit Scale3PercentUpdated(oldValue, value);
+        _setScaleValue(3, value);
     }
     /// @notice Sets the percentage fee for scale 4 transactions (1000-5000 USDT)
     /// @dev Only callable by owner, must be <= 200 basis points (2%)
     /// @param value New percentage fee in basis points (75 = 0.75%)
     function setScale4Percent(uint16 value) external onlyOwner {
-        require(value <= 200, "Scale4Percent must be <= 2% (200)");
+        if (value > 200) revert InvalidScaleValue();
         _validateFeeHierarchy(scale2Percent, scale3Percent, value, scale5Percent, scale6Percent, merchantVerifiedPercent);
-        uint16 oldValue = scale4Percent;
-        scale4Percent = value;
-        emit Scale4PercentUpdated(oldValue, value);
+        _setScaleValue(4, value);
     }
     /// @notice Sets the percentage fee for scale 5 transactions (5000-10000 USDT)
     /// @dev Only callable by owner, must be <= 200 basis points (2%)
     /// @param value New percentage fee in basis points (50 = 0.5%)
     function setScale5Percent(uint16 value) external onlyOwner {
-        require(value <= 200, "Scale5Percent must be <= 2% (200)");
+        if (value > 200) revert InvalidScaleValue();
         _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, value, scale6Percent, merchantVerifiedPercent);
-        uint16 oldValue = scale5Percent;
-        scale5Percent = value;
-        emit Scale5PercentUpdated(oldValue, value);
+        _setScaleValue(5, value);
     }
     /// @notice Sets the percentage fee for scale 6 transactions (10000+ USDT)
     /// @dev Only callable by owner, must be <= 200 basis points (2%)
     /// @param value New percentage fee in basis points (25 = 0.25%)
     function setScale6Percent(uint16 value) external onlyOwner {
-        require(value <= 200, "Scale6Percent must be <= 2% (200)");
+        if (value > 200) revert InvalidScaleValue();
         _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, scale5Percent, value, merchantVerifiedPercent);
-        uint16 oldValue = scale6Percent;
-        scale6Percent = value;
-        emit Scale6PercentUpdated(oldValue, value);
+        _setScaleValue(6, value);
     }
 
     
@@ -602,7 +693,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @dev Only callable by owner, must be <= 200 basis points (2%)
     /// @param value New percentage fee in basis points (25 = 0.25%)
     function setMerchantVerifiedPercent(uint16 value) external onlyOwner {
-        require(value <= 200, "MerchantVerifiedPercent must be <= 2% (200)");
+        if (value > 200) revert InvalidScaleValue();
         _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, scale5Percent, scale6Percent, value);
         uint16 oldValue = merchantVerifiedPercent;
         merchantVerifiedPercent = value;
