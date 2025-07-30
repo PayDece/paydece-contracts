@@ -9,7 +9,7 @@ import "./Ownable.sol";
 contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @notice Time limit in seconds for users to complete the transaction
     /// @dev 0.1 is 100 because it is multiplied by a thousand => 0.1 X 1000 = 100
-    uint256 public timeProcess;
+    uint32 public timeProcess;
 
     /// @notice Fixed fee for scale 1 transactions (1-50 USDT)
     /// @dev Amount in token decimals (e.g., 0.5 USDC = 5e17 if 18 decimals)
@@ -41,13 +41,13 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     using SafeERC20 for IERC20;
     /// @notice Mapping of order IDs to their corresponding escrow data
-    mapping(uint => Escrow) public escrows;
+    mapping(uint256 => Escrow) public escrows;
     
     /// @notice Mapping of whitelisted stablecoin addresses
     mapping(address => bool) private whitelistedStablesAddresses;
     
     /// @notice Mapping of accumulated fees available for withdrawal per token
-    mapping(IERC20 => uint) public feesAvailable;
+    mapping(IERC20 => uint256) public feesAvailable;
     
     /// @notice Mapping to track merchant status for addresses
     mapping(address => bool) public isMerchant;
@@ -96,38 +96,38 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         uint256 senderFee;
         IERC20 currency;
         EscrowStatus status;
-        uint256 created;
+        uint32 created;
         bool isSenderMerchant;
         bool isReceiverMerchant;
-        uint256 escrowTimeProcess;
+        uint32 escrowTimeProcess;
     }
 
     /// @notice Mapping of order IDs to their appeal data
-    mapping(uint => Appeal) public escrowAppeals;
+    mapping(uint256 => Appeal) public escrowAppeals;
 
     /// @notice Emitted when a new escrow is created and funds deposited
-    event EscrowDeposit(uint indexed orderId, Escrow escrow);
+    event EscrowDeposit(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when escrow is completed and funds released to receiver
-    event EscrowComplete(uint indexed orderId, Escrow escrow);
+    event EscrowComplete(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when sender cancels escrow after timeout
-    event EscrowCancelSender(uint indexed orderId, Escrow escrow);
+    event EscrowCancelSender(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when receiver cancels escrow
-    event EscrowCancelReceiver(uint indexed orderId, Escrow escrow);
+    event EscrowCancelReceiver(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when receiver marks escrow as paid
-    event EscrowMarkAsPaid(uint indexed orderId, Escrow escrow);
+    event EscrowMarkAsPaid(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when owner marks escrow as paid (administrative)
-    event EscrowMarkAsPaidOwner(uint indexed orderId, Escrow escrow);
+    event EscrowMarkAsPaidOwner(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when owner refunds escrow to sender during appeal
-    event EscrowRefundOwner(uint indexed orderId, Escrow escrow);
+    event EscrowRefundOwner(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when timeProcess is updated by owner
-    event SetTimeProcessEvent(uint256 timeProcess);
+    event SetTimeProcessEvent(uint32 timeProcess);
     
     /// @notice Emitted when a stablecoin address is added to whitelist
     event AddStablesAddressesEvent(address addressStable);
@@ -136,10 +136,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event DelStablesAddressesEvent(address addressStable);
     
     /// @notice Emitted when sender initiates an appeal
-    event EscrowAppealSender(uint indexed orderId, Escrow escrow);
+    event EscrowAppealSender(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when receiver initiates an appeal
-    event EscrowAppealReceiver(uint indexed orderId, Escrow escrow);
+    event EscrowAppealReceiver(uint256 indexed orderId, Escrow escrow);
     
     /// @notice Emitted when owner withdraws accumulated fees
     event FeesWithdrawn(IERC20 indexed currency, uint256 amount, address indexed to);
@@ -170,7 +170,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     /// @notice Modifier to restrict function access to the escrow sender only
     /// @param _orderId The unique identifier of the escrow transaction
-    modifier onlySender(uint _orderId) {
+    modifier onlySender(uint256 _orderId) {
         require(
             msg.sender == escrows[_orderId].sender,
             "Only Sender can call this"
@@ -180,7 +180,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     /// @notice Modifier to restrict function access to the escrow receiver only
     /// @param _orderId The unique identifier of the escrow transaction
-    modifier onlyReceiver(uint _orderId) {
+    modifier onlyReceiver(uint256 _orderId) {
         require(
             msg.sender == escrows[_orderId].receiver,
             "Only Receiver can call this"
@@ -207,7 +207,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @notice Sets the time limit for escrow completion
     /// @dev Only callable by contract owner, must be greater than 0
     /// @param _timeProcess Time limit in seconds for completing escrow transactions
-    function setTimeProcess(uint256 _timeProcess) external onlyOwner {
+    function setTimeProcess(uint32 _timeProcess) external onlyOwner {
         require(_timeProcess >= 15 * 60, "timeProcess must be >= 15 minutes");
         require(_timeProcess <= 2 * 24 * 60 * 60, "timeProcess must be <= 2 days");
         timeProcess = _timeProcess;
@@ -221,7 +221,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value Amount to be escrowed (in token units)
     /// @param currency ERC20 token contract address for the transaction
     function createEscrow(
-        uint orderId,
+        uint256 orderId,
         address payable receiver,
         uint256 value,
         IERC20 currency
@@ -255,7 +255,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         e.senderFee = feeAmountSender;
         e.currency = currency;
         e.status = EscrowStatus.CRYPTOS_IN_CUSTODY;
-        e.created = block.timestamp;
+        e.created = uint32(block.timestamp);
         e.isSenderMerchant = senderIsMerchant;
         e.isReceiverMerchant = receiverIsMerchant;
         e.escrowTimeProcess = timeProcess;
@@ -267,7 +267,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @notice Releases escrow funds during appeal resolution (owner only)
     /// @dev Only callable by owner when escrow status is APPEAL
     /// @param _orderId The unique identifier of the escrow transaction
-    function releaseEscrowOwner(uint _orderId) external onlyOwner {
+    function releaseEscrowOwner(uint256 _orderId) external onlyOwner {
         require(
             escrows[_orderId].status == EscrowStatus.APPEAL,
             "Status must be APPEAL"
@@ -278,7 +278,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @notice Releases escrow funds to receiver (sender only)
     /// @dev Only callable by sender when escrow is in CRYPTOS_IN_CUSTODY or FIATCOIN_TRANSFERED
     /// @param _orderId The unique identifier of the escrow transaction
-    function releaseEscrow(uint _orderId) external onlySender(_orderId) {
+    function releaseEscrow(uint256 _orderId) external onlySender(_orderId) {
         require(
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY ||
             escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED ||
@@ -291,7 +291,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @notice Refunds escrow funds to sender (owner only during appeal)
     /// @dev Only callable by owner when status is APPEAL, returns funds + sender fee
     /// @param _orderId The unique identifier of the escrow transaction
-    function refundOwner(uint _orderId) external nonReentrant onlyOwner {
+    function refundOwner(uint256 _orderId) external nonReentrant onlyOwner {
         require( 
             escrows[_orderId].status == EscrowStatus.APPEAL,
             "Refund not approved"
@@ -318,7 +318,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @notice Retrieves the current status of an escrow transaction
     /// @param _orderId The unique identifier of the escrow transaction
     /// @return The current EscrowStatus of the specified transaction
-    function getState(uint _orderId) external view returns (EscrowStatus) {
+    function getState(uint256 _orderId) external view returns (EscrowStatus) {
         return escrows[_orderId].status;
     }
 
@@ -354,7 +354,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             escrows[_orderId].status == EscrowStatus.CRYPTOS_IN_CUSTODY,
             "Status must be CRYPTOS_IN_CUSTODY"
         );
-        require((block.timestamp - escrows[_orderId].created) > escrows[_orderId].escrowTimeProcess, "Time is still running out.");
+        require((uint32(block.timestamp) - escrows[_orderId].created) > escrows[_orderId].escrowTimeProcess, "Time is still running out.");
         escrows[_orderId].status = EscrowStatus.CANCEL_SENDER;
         uint256 _amountFeeSender = escrows[_orderId].senderFee;
         
@@ -464,7 +464,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @dev Handles fee collection and status updates, prevents reentrancy
     /// @param _orderId The unique identifier of the escrow transaction
     /// @param isOwner True if release is initiated by owner, false if by sender
-    function _releaseEscrow(uint _orderId, bool isOwner) private nonReentrant {
+    function _releaseEscrow(uint256 _orderId, bool isOwner) private nonReentrant {
         // Only deduct receiver fee from receiver
         uint256 _amountFeeReceiver = escrows[_orderId].receiverFee;
         uint256 _amountFeeSender = escrows[_orderId].senderFee;
@@ -636,7 +636,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         ];
         
         // Apply changes to temporary array and validate inputs
-        for (uint i = 0; i < scaleIds.length; i++) {
+        for (uint256 i = 0; i < scaleIds.length; i++) {
             if (scaleIds[i] < 2 || scaleIds[i] > 6) revert InvalidScaleId();
             if (scaleValues[i] > 200) revert InvalidScaleValue();
             newScales[scaleIds[i] - 2] = scaleValues[i];
@@ -649,7 +649,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         );
         
         // Apply changes and emit events
-        for (uint i = 0; i < scaleIds.length; i++) {
+        for (uint256 i = 0; i < scaleIds.length; i++) {
             _setScaleValue(scaleIds[i], scaleValues[i]);
         }
     }
