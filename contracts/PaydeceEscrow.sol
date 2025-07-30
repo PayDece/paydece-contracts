@@ -430,8 +430,8 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
             require(msg.sender == escrows[_orderId].receiver, "Only receiver can appeal");
         }
         require(
-            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED && escrows[_orderId].status != EscrowStatus.APPEAL,
-            "Status must be FIATCOIN_TRANSFERED or APPEAL"
+            escrows[_orderId].status == EscrowStatus.FIATCOIN_TRANSFERED,
+            "Status must be FIATCOIN_TRANSFERED"
         );
         if (isSender) {
             escrowAppeals[_orderId].appealSender = true;        

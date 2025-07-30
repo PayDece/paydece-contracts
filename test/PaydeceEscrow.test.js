@@ -573,7 +573,7 @@ describe("PaydeceEscrow", function () {
       const escrow = await paydeceEscrow.escrows(orderId);
       await expect(
         paydeceEscrow.connect(sender).appeal(orderId, true, 1)
-      ).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED or APPEAL");
+      ).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED");
     });
 
     it("should fail if already in APPEAL status", async function () {
@@ -584,7 +584,7 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
       await expect(
         paydeceEscrow.connect(sender).appeal(orderId, true, 1)
-      ).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED or APPEAL");
+      ).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED");
     });
   });
 
@@ -1378,7 +1378,7 @@ describe("PaydeceEscrow", function () {
       const orderId = 9001;
       const value = ethers.utils.parseUnits("10", 18);
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
-      await expect(paydeceEscrow.connect(sender).appeal(orderId, true, 1)).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED or APPEAL");
+      await expect(paydeceEscrow.connect(sender).appeal(orderId, true, 1)).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED");
     });
     it("should revert appeal if already in APPEAL", async function () {
       const orderId = 9002;
@@ -1386,7 +1386,7 @@ describe("PaydeceEscrow", function () {
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await paydeceEscrow.connect(receiver).setMarkAsPaid(orderId);
       await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
-      await expect(paydeceEscrow.connect(sender).appeal(orderId, true, 1)).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED or APPEAL");
+      await expect(paydeceEscrow.connect(sender).appeal(orderId, true, 1)).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED");
     });
     it("should revert appeal if not sender/receiver", async function () {
       const orderId = 9003;
@@ -1678,7 +1678,7 @@ describe("PaydeceEscrow", function () {
     it("should revert if appeal is called when status is not FIATCOIN_TRANSFERED", async function () {
       const orderId = 12345;
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, ethers.utils.parseUnits("100", 18), token, false, false);
-      await expect(paydeceEscrow.connect(sender).appeal(orderId, true, 1)).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED or APPEAL");
+      await expect(paydeceEscrow.connect(sender).appeal(orderId, true, 1)).to.be.revertedWith("Status must be FIATCOIN_TRANSFERED");
     });
     it("should allow sender to appeal", async function () {
       const orderId = 12346;
