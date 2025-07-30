@@ -37,7 +37,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
     await usdt.connect(owner).transfer(sender.address, ethers.utils.parseUnits("10000", 18));
     
     // Whitelist USDT
-    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
+    await paydeceEscrow.connect(owner).addStableAddress(usdt.address);
   });
 
   describe("Address.sol Coverage", function () {

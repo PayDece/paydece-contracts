@@ -44,7 +44,7 @@ describe("PaydeceEscrow", function () {
     await paydeceEscrow.deployed();
 
     // Whitelist the token
-    await paydeceEscrow.addStablesAddresses(token.address);
+    await paydeceEscrow.addStableAddress(token.address);
   });
 
   describe("createEscrow", function () {
@@ -315,7 +315,7 @@ describe("PaydeceEscrow", function () {
       const FailingERC20 = await ethers.getContractFactory("FailingERC20");
       const failingToken = await FailingERC20.deploy();
       await failingToken.deployed();
-      await paydeceEscrow.connect(owner).addStablesAddresses(failingToken.address);
+      await paydeceEscrow.connect(owner).addStableAddress(failingToken.address);
       const orderId = 99999;
       const value = ethers.utils.parseEther("1");
       await failingToken.approve(paydeceEscrow.address, value);
@@ -454,9 +454,9 @@ describe("PaydeceEscrow", function () {
     });
   });
 
-  describe("delStablesAddresses", function () {
+  describe("removeStableAddress", function () {
     it("should delete a stable address", async function () {
-      await paydeceEscrow.connect(owner).delStablesAddresses(token.address);
+      await paydeceEscrow.connect(owner).removeStableAddress(token.address);
       // Verifica que ya no está whitelisted
       // (no hay getter, pero podrías intentar crear un escrow y esperar revert)
     });
@@ -464,7 +464,7 @@ describe("PaydeceEscrow", function () {
     it("should fail if not called by the owner", async function () {
       // Attempt to delete stable address by someone other than the owner
       await expect(
-        paydeceEscrow.connect(sender).delStablesAddresses(token.address)
+        paydeceEscrow.connect(sender).removeStableAddress(token.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
@@ -607,20 +607,20 @@ describe("PaydeceEscrow", function () {
         paydeceEscrow.connect(owner).withdrawFees(token2.address)
       ).to.be.revertedWith("No fees available for withdrawal");
     });
-    it("should not allow addStablesAddresses by non-owner", async function () {
+    it("should not allow addStableAddress by non-owner", async function () {
       const Token = await ethers.getContractFactory("USDTToken");
       const token2 = await Token.deploy();
       await token2.deployed();
       await expect(
-        paydeceEscrow.connect(sender).addStablesAddresses(token2.address)
+        paydeceEscrow.connect(sender).addStableAddress(token2.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
-    it("should not allow delStablesAddresses by non-owner", async function () {
+    it("should not allow removeStableAddress by non-owner", async function () {
       const Token = await ethers.getContractFactory("USDTToken");
       const token2 = await Token.deploy();
       await token2.deployed();
       await expect(
-        paydeceEscrow.connect(sender).delStablesAddresses(token2.address)
+        paydeceEscrow.connect(sender).removeStableAddress(token2.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
     it("should not allow createEscrow with non-whitelisted token", async function () {

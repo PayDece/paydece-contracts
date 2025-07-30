@@ -17,7 +17,7 @@ describe("PaydeceEscrow Extra Flow", function () {
     paydeceEscrow = await PaydeceEscrow.deploy();
     await paydeceEscrow.deployed();
     // Whitelist USDT
-    await paydeceEscrow.connect(owner).addStablesAddresses(usdt.address);
+    await paydeceEscrow.connect(owner).addStableAddress(usdt.address);
   });
 
   it("should create escrow, mark as paid, and release escrow", async function () {

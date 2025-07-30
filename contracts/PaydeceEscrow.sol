@@ -130,10 +130,10 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     event SetTimeProcessEvent(uint32 timeProcess);
     
     /// @notice Emitted when a stablecoin address is added to whitelist
-    event AddStablesAddressesEvent(address addressStable);
+    event AddStableAddressEvent(address addressStable);
     
     /// @notice Emitted when a stablecoin address is removed from whitelist
-    event DelStablesAddressesEvent(address addressStable);
+    event RemoveStableAddressEvent(address addressStable);
     
     /// @notice Emitted when sender initiates an appeal
     event EscrowAppealSender(uint256 indexed orderId, Escrow escrow);
@@ -324,24 +324,24 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
 
     /// @notice Adds a stablecoin address to the whitelist (owner only)
     /// @dev Only whitelisted tokens can be used for escrow transactions
-    /// @param _addressStableToWhitelist The ERC20 token address to whitelist
-    function addStablesAddresses(
-        address _addressStableToWhitelist
+    /// @param _addressStable The ERC20 token address to whitelist
+    function addStableAddress(
+        address _addressStable
     ) external onlyOwner {
-        whitelistedStablesAddresses[_addressStableToWhitelist] = true;
+        whitelistedStablesAddresses[_addressStable] = true;
 
-        emit AddStablesAddressesEvent(_addressStableToWhitelist);
+        emit AddStableAddressEvent(_addressStable);
     }
 
     /// @notice Removes a stablecoin address from the whitelist (owner only)
     /// @dev Prevents the token from being used in new escrow transactions
-    /// @param _addressStableToWhitelist The ERC20 token address to remove from whitelist
-    function delStablesAddresses(
-        address _addressStableToWhitelist
+    /// @param _addressStable The ERC20 token address to remove from whitelist
+    function removeStableAddress(
+        address _addressStable
     ) external onlyOwner {
-        whitelistedStablesAddresses[_addressStableToWhitelist] = false;
+        whitelistedStablesAddresses[_addressStable] = false;
 
-        emit DelStablesAddressesEvent(_addressStableToWhitelist);
+        emit RemoveStableAddressEvent(_addressStable);
     }
 
     /// @notice Cancels escrow and refunds sender after timeout period
