@@ -497,17 +497,17 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @return Calculated fee amount in token units
     function _calculateFee(uint256 amount, IERC20 currency, bool _isMerchant) internal view returns (uint256) {
         uint8 decimals = currency.decimals();
-        uint256 usdtDecimals = 10 ** uint256(decimals);
+        uint256 tokenDecimalsFactor = 10 ** uint256(decimals);
         
         // If merchant verified, apply preferential merchant fee (0.25%)
         if (_isMerchant) {
             return (amount * merchantVerifiedPercent) / 10000;
         }
         // Fee scales for regular users (continuous ranges)
-        uint256 amountUsdt = amount / usdtDecimals;
+        uint256 amountUsdt = amount / tokenDecimalsFactor;
         if (amountUsdt >= 1 && amountUsdt < 50) {
             // Scale 1: fixed fee
-            return scale1FixedFee * usdtDecimals / 10; // scale1FixedFee is decimal, e.g.: 0.5 -> 5, divided by 10
+            return scale1FixedFee * tokenDecimalsFactor / 10; // scale1FixedFee is decimal, e.g.: 0.5 -> 5, divided by 10
         } else if (amountUsdt >= 50 && amountUsdt < 100) {
             // Scale 2: 1.25%
             return (amount * scale2Percent) / 10000;
