@@ -259,8 +259,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         e.isSenderMerchant = senderIsMerchant;
         e.isReceiverMerchant = receiverIsMerchant;
         e.escrowTimeProcess = timeProcess;
-        // Save secondary fields in mappings
-        escrowAppeals[orderId] = Appeal(false, false, 0);
+        
         emit EscrowDeposit(orderId, escrows[orderId]);
     }
 
