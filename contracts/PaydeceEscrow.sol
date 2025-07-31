@@ -552,6 +552,64 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
         }
     }
 
+    /// @notice Validates only relevant hierarchy constraints for scale 2
+    /// @dev Gas-optimized validation for individual scale updates
+    /// @param _scale2 New scale 2 value to validate
+    function _validateScale2(uint16 _scale2) internal view {
+        unchecked {
+            if (_scale2 < scale3Percent) revert InvalidFeeHierarchy(1);
+        }
+    }
+
+    /// @notice Validates only relevant hierarchy constraints for scale 3
+    /// @dev Gas-optimized validation for individual scale updates
+    /// @param _scale3 New scale 3 value to validate
+    function _validateScale3(uint16 _scale3) internal view {
+        unchecked {
+            if (scale2Percent < _scale3) revert InvalidFeeHierarchy(1);
+            if (_scale3 < scale4Percent) revert InvalidFeeHierarchy(2);
+        }
+    }
+
+    /// @notice Validates only relevant hierarchy constraints for scale 4
+    /// @dev Gas-optimized validation for individual scale updates
+    /// @param _scale4 New scale 4 value to validate
+    function _validateScale4(uint16 _scale4) internal view {
+        unchecked {
+            if (scale3Percent < _scale4) revert InvalidFeeHierarchy(2);
+            if (_scale4 < scale5Percent) revert InvalidFeeHierarchy(3);
+        }
+    }
+
+    /// @notice Validates only relevant hierarchy constraints for scale 5
+    /// @dev Gas-optimized validation for individual scale updates
+    /// @param _scale5 New scale 5 value to validate
+    function _validateScale5(uint16 _scale5) internal view {
+        unchecked {
+            if (scale4Percent < _scale5) revert InvalidFeeHierarchy(3);
+            if (_scale5 < scale6Percent) revert InvalidFeeHierarchy(4);
+        }
+    }
+
+    /// @notice Validates only relevant hierarchy constraints for scale 6
+    /// @dev Gas-optimized validation for individual scale updates
+    /// @param _scale6 New scale 6 value to validate
+    function _validateScale6(uint16 _scale6) internal view {
+        unchecked {
+            if (scale5Percent < _scale6) revert InvalidFeeHierarchy(4);
+            if (_scale6 < merchantVerifiedPercent) revert InvalidFeeHierarchy(5);
+        }
+    }
+
+    /// @notice Validates only relevant hierarchy constraints for merchant verified percent
+    /// @dev Gas-optimized validation for individual scale updates
+    /// @param _merchant New merchant verified percent to validate
+    function _validateMerchantPercent(uint16 _merchant) internal view {
+        unchecked {
+            if (scale6Percent < _merchant) revert InvalidFeeHierarchy(5);
+        }
+    }
+
     /// @notice Internal function to set scale value and emit event
     /// @dev Optimized internal function to reduce code duplication
     /// @param scaleId Scale identifier (2-6)
@@ -658,7 +716,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (125 = 1.25%)
     function setScale2Percent(uint16 value) external onlyOwner {
         if (value > 200) revert InvalidScaleValue();
-        _validateFeeHierarchy(value, scale3Percent, scale4Percent, scale5Percent, scale6Percent, merchantVerifiedPercent);
+        _validateScale2(value);
         _setScaleValue(2, value);
     }
     /// @notice Sets the percentage fee for scale 3 transactions (100-1000 USDT)
@@ -666,7 +724,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (100 = 1%)
     function setScale3Percent(uint16 value) external onlyOwner {
         if (value > 200) revert InvalidScaleValue();
-        _validateFeeHierarchy(scale2Percent, value, scale4Percent, scale5Percent, scale6Percent, merchantVerifiedPercent);
+        _validateScale3(value);
         _setScaleValue(3, value);
     }
     /// @notice Sets the percentage fee for scale 4 transactions (1000-5000 USDT)
@@ -674,7 +732,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (75 = 0.75%)
     function setScale4Percent(uint16 value) external onlyOwner {
         if (value > 200) revert InvalidScaleValue();
-        _validateFeeHierarchy(scale2Percent, scale3Percent, value, scale5Percent, scale6Percent, merchantVerifiedPercent);
+        _validateScale4(value);
         _setScaleValue(4, value);
     }
     /// @notice Sets the percentage fee for scale 5 transactions (5000-10000 USDT)
@@ -682,7 +740,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (50 = 0.5%)
     function setScale5Percent(uint16 value) external onlyOwner {
         if (value > 200) revert InvalidScaleValue();
-        _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, value, scale6Percent, merchantVerifiedPercent);
+        _validateScale5(value);
         _setScaleValue(5, value);
     }
     /// @notice Sets the percentage fee for scale 6 transactions (10000+ USDT)
@@ -690,7 +748,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (25 = 0.25%)
     function setScale6Percent(uint16 value) external onlyOwner {
         if (value > 200) revert InvalidScaleValue();
-        _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, scale5Percent, value, merchantVerifiedPercent);
+        _validateScale6(value);
         _setScaleValue(6, value);
     }
 
@@ -700,7 +758,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     /// @param value New percentage fee in basis points (25 = 0.25%)
     function setMerchantVerifiedPercent(uint16 value) external onlyOwner {
         if (value > 200) revert InvalidScaleValue();
-        _validateFeeHierarchy(scale2Percent, scale3Percent, scale4Percent, scale5Percent, scale6Percent, value);
+        _validateMerchantPercent(value);
         uint16 oldValue = merchantVerifiedPercent;
         merchantVerifiedPercent = value;
         emit MerchantVerifiedPercentUpdated(oldValue, value);
