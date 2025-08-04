@@ -1713,9 +1713,12 @@ describe("PaydeceEscrow", function () {
 
   describe("renounceOwnership", function () {
     it("should revert with 'RenounceOwnership is disabled' when called by owner", async function () {
-      await expect(
-        paydeceEscrow.renounceOwnership()
-      ).to.be.revertedWith("RenounceOwnership is disabled");
+      try {
+        await paydeceEscrow.renounceOwnership();
+        expect.fail("Expected transaction to revert");
+      } catch (error) {
+        expect(error.message).to.include("RenounceOwnershipDisabled");
+      }
     });
 
     it("should revert if called by non-owner", async function () {

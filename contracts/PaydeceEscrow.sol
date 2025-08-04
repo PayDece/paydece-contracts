@@ -4,9 +4,9 @@ pragma solidity 0.8.24;
 import "./IERC20.sol";
 import "./SafeERC20.sol";
 import "./ReentrancyGuard.sol";
-import "./Ownable.sol";
+import "./Ownable2Step.sol";
 
-contract PaydeceEscrow is ReentrancyGuard, Ownable {
+contract PaydeceEscrow is ReentrancyGuard, Ownable2Step {
     /// @notice Time limit in seconds for users to complete the transaction
     /// @dev 0.1 is 100 because it is multiplied by a thousand => 0.1 X 1000 = 100
     uint32 public timeProcess;
@@ -533,6 +533,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     error InvalidScaleId();
     error ArrayLengthMismatch();
     error EmptyArray();
+    error RenounceOwnershipDisabled();
 
     function _validateFeeHierarchy(
         uint16 _scale2,
@@ -800,7 +801,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable {
     }
 
     function renounceOwnership() public view override onlyOwner {
-        revert("RenounceOwnership is disabled");
+        revert RenounceOwnershipDisabled();
     }
 
     // ================== End Private functions ==================

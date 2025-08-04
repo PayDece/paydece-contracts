@@ -112,9 +112,12 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
   describe("Ownable.sol Coverage", function () {
     it("should test renounceOwnership is disabled", async function () {
       // Test renounceOwnership which is overridden to revert (covers line 63)
-      await expect(
-        paydeceEscrow.connect(owner).renounceOwnership()
-      ).to.be.revertedWith("RenounceOwnership is disabled");
+      try {
+        await paydeceEscrow.connect(owner).renounceOwnership();
+        expect.fail("Expected transaction to revert");
+      } catch (error) {
+        expect(error.message).to.include("RenounceOwnershipDisabled");
+      }
     });
 
     it("should test ownership functionality through existing functions", async function () {

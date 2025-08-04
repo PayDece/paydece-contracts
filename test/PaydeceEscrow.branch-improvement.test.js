@@ -78,9 +78,12 @@ describe("PaydeceEscrow - Branch Coverage Improvements", function () {
     it("should test renounceOwnership override", async function () {
       // Test the overridden renounceOwnership function
       // This should cover the missing branch in line 62
-      await expect(
-        paydeceEscrow.connect(owner).renounceOwnership()
-      ).to.be.revertedWith("RenounceOwnership is disabled");
+      try {
+        await paydeceEscrow.connect(owner).renounceOwnership();
+        expect.fail("Expected transaction to revert");
+      } catch (error) {
+        expect(error.message).to.include("RenounceOwnershipDisabled");
+      }
     });
   });
 
