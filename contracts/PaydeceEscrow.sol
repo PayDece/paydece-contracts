@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "./IERC20.sol";
-import "./SafeERC20.sol";
-import "./ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./Ownable2Step.sol";
 
 contract PaydeceEscrow is ReentrancyGuard, Ownable2Step {
@@ -495,7 +496,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable2Step {
     /// @param _isMerchant Whether the party has merchant verification
     /// @return Calculated fee amount in token units
     function _calculateFee(uint256 amount, IERC20 currency, bool _isMerchant) internal view returns (uint256) {
-        uint8 decimals = currency.decimals();
+        uint8 decimals = IERC20Metadata(address(currency)).decimals();
         uint256 tokenDecimalsFactor = 10 ** uint256(decimals);
         
         // If merchant verified, apply preferential merchant fee (0.25%)

@@ -6,7 +6,9 @@
       "Bash(npx hardhat:*)",
       "Bash(npm install:*)",
       "Bash(npm test)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
