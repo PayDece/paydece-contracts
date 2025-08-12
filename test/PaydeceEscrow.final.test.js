@@ -20,7 +20,7 @@ describe("PaydeceEscrow - Final Coverage Improvements", function () {
     
     // Deploy PaydeceEscrow
     const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
+    paydeceEscrow = await PaydeceEscrow.deploy(owner.address);
     await paydeceEscrow.deployed();
     
     // Transfer tokens to sender

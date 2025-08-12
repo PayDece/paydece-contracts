@@ -10,7 +10,7 @@ describe("PaydeceEscrow - Fee Hierarchy Validation", function () {
     
     // Deploy PaydeceEscrow
     const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
+    paydeceEscrow = await PaydeceEscrow.deploy(owner.address);
     await paydeceEscrow.deployed();
   });
 

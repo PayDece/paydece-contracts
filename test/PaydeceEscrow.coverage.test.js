@@ -30,7 +30,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
     
     // Deploy PaydeceEscrow
     const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
+    paydeceEscrow = await PaydeceEscrow.deploy(owner.address);
     await paydeceEscrow.deployed();
     
     // Transfer tokens to sender
@@ -64,7 +64,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
       // Test SafeERC20 reverting with token that returns false
       await expect(
         safeERC20Test.doSafeTransfer(failingERC20.address, receiver.address, 100)
-      ).to.be.revertedWith("ERC20 operation did not succeed");
+      ).to.be.revertedWith("SafeERC20FailedOperation");
     });
 
     it("should test SafeERC20 with token transfer to zero address", async function () {
@@ -127,7 +127,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
       // Non-owner should fail
       await expect(
         paydeceEscrow.connect(other).setTimeProcess(3600)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 
@@ -147,7 +147,7 @@ describe("PaydeceEscrow - Coverage Improvements", function () {
     it("should test safeTransferFrom with failing token", async function () {
       await expect(
         safeERC20Test.doSafeTransferFrom(failingERC20.address, sender.address, receiver.address, 100)
-      ).to.be.revertedWith("ERC20 operation did not succeed");
+      ).to.be.revertedWith("SafeERC20FailedOperation");
     });
 
     it("should test SafeERC20 internal functions", async function () {

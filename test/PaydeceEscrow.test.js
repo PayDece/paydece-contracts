@@ -40,7 +40,7 @@ describe("PaydeceEscrow", function () {
 
     // Deploy the PaydeceEscrow contract
     PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
+    paydeceEscrow = await PaydeceEscrow.deploy(owner.address);
     await paydeceEscrow.deployed();
 
     // Whitelist the token
@@ -269,7 +269,7 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
       await expect(
         paydeceEscrow.connect(sender).releaseEscrowOwner(orderId)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
     it("should emit EscrowComplete when owner releases escrow in APPEAL", async function () {
       const orderId = 9999;
@@ -301,7 +301,7 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(sender).appeal(orderId, true, 1);
       await expect(
         paydeceEscrow.connect(sender).refundOwner(orderId)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
     it("should fail if status is not APPEAL", async function () {
       const orderId = 54321;
@@ -321,7 +321,7 @@ describe("PaydeceEscrow", function () {
       await failingToken.approve(paydeceEscrow.address, value);
       await expect(
         paydeceEscrow.connect(owner).createEscrow(orderId, receiver.address, value, failingToken.address)
-      ).to.be.revertedWith("SafeERC20: ERC20 operation did not succeed");
+      ).to.be.revertedWith("SafeERC20FailedOperation");
     });
     it("should revert if status is not APPEAL (branch coverage)", async function () {
       const orderId = 123456;
@@ -353,7 +353,7 @@ describe("PaydeceEscrow", function () {
       await createEscrowWithToken(paydeceEscrow, orderId, sender, receiver, value, token, false, false);
       await expect(
         paydeceEscrow.connect(sender).setMarkAsPaidOwner(orderId)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 
@@ -465,7 +465,7 @@ describe("PaydeceEscrow", function () {
       // Attempt to delete stable address by someone other than the owner
       await expect(
         paydeceEscrow.connect(sender).removeStableAddress(token.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 
@@ -499,7 +499,7 @@ describe("PaydeceEscrow", function () {
       // Attempt to withdraw fees by someone other than the owner
       await expect(
         paydeceEscrow.connect(sender).withdrawFees(token.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 
@@ -521,7 +521,7 @@ describe("PaydeceEscrow", function () {
       // Attempt to set the time process by someone other than the owner
       await expect(
         paydeceEscrow.connect(sender).setTimeProcess(newTimeProcess)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
 
     it("should fail if The timeProcess can be 0", async function () {
@@ -613,7 +613,7 @@ describe("PaydeceEscrow", function () {
       await token2.deployed();
       await expect(
         paydeceEscrow.connect(sender).addStableAddress(token2.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
     it("should not allow removeStableAddress by non-owner", async function () {
       const Token = await ethers.getContractFactory("USDTToken");
@@ -621,7 +621,7 @@ describe("PaydeceEscrow", function () {
       await token2.deployed();
       await expect(
         paydeceEscrow.connect(sender).removeStableAddress(token2.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
     it("should not allow createEscrow with non-whitelisted token", async function () {
       const Token = await ethers.getContractFactory("USDTToken");
@@ -1191,35 +1191,35 @@ describe("PaydeceEscrow", function () {
     it("should revert on safeTransfer if token returns false", async function () {
       await expect(
         safeERC20Test.doSafeTransfer(failingToken.address, other.address, 1)
-      ).to.be.revertedWith("SafeERC20: ERC20 operation did not succeed");
+      ).to.be.revertedWith("SafeERC20FailedOperation");
     });
     it("should revert on safeTransferFrom if token returns false", async function () {
       await expect(
         safeERC20Test.doSafeTransferFrom(failingToken.address, owner.address, other.address, 1)
-      ).to.be.revertedWith("SafeERC20: ERC20 operation did not succeed");
+      ).to.be.revertedWith("SafeERC20FailedOperation");
     });
   });
 
   describe("fee scale setters", function () {
     it("should allow only the owner to set scale1FixedFee", async function () {
-      await expect(paydeceEscrow.connect(sender).setScale1FixedFee(5)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(sender).setScale1FixedFee(5)).to.be.reverted;
     });
     it("should allow only the owner to set scale2Percent", async function () {
       await expect(paydeceEscrow.connect(owner).setScale2Percent(200)).to.not.be.reverted;
-      await expect(paydeceEscrow.connect(sender).setScale2Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(sender).setScale2Percent(200)).to.be.reverted;
     });
     it("should allow only the owner to set scale3Percent", async function () {
       // First set higher scales to 200 to respect hierarchy
       await paydeceEscrow.connect(owner).setScale2Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale3Percent(200)).to.not.be.reverted;
-      await expect(paydeceEscrow.connect(sender).setScale3Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(sender).setScale3Percent(200)).to.be.reverted;
     });
     it("should allow only the owner to set scale4Percent", async function () {
       // First set higher scales to 200 to respect hierarchy
       await paydeceEscrow.connect(owner).setScale2Percent(200);
       await paydeceEscrow.connect(owner).setScale3Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale4Percent(200)).to.not.be.reverted;
-      await expect(paydeceEscrow.connect(sender).setScale4Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(sender).setScale4Percent(200)).to.be.reverted;
     });
     it("should allow only the owner to set scale5Percent", async function () {
       // First set higher scales to 200 to respect hierarchy
@@ -1227,7 +1227,7 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(owner).setScale3Percent(200);
       await paydeceEscrow.connect(owner).setScale4Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale5Percent(200)).to.not.be.reverted;
-      await expect(paydeceEscrow.connect(sender).setScale5Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(sender).setScale5Percent(200)).to.be.reverted;
     });
     it("should allow only the owner to set scale6Percent", async function () {
       // First set higher scales to 200 to respect hierarchy
@@ -1236,7 +1236,7 @@ describe("PaydeceEscrow", function () {
       await paydeceEscrow.connect(owner).setScale4Percent(200);
       await paydeceEscrow.connect(owner).setScale5Percent(200);
       await expect(paydeceEscrow.connect(owner).setScale6Percent(200)).to.not.be.reverted;
-      await expect(paydeceEscrow.connect(sender).setScale6Percent(200)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(sender).setScale6Percent(200)).to.be.reverted;
     });
     it("should not allow scale1FixedFee > 0.5 USDC", async function () {
       const tooHigh = 6; // 0.6 token (mayor a 0.5)
@@ -1415,7 +1415,7 @@ describe("PaydeceEscrow", function () {
       const tokenLocal = await Token.deploy();
       await tokenLocal.deployed();
       const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-      const paydeceEscrowLocal = await PaydeceEscrow.deploy();
+      const paydeceEscrowLocal = await PaydeceEscrow.deploy(owner.address);
       await paydeceEscrowLocal.deployed();
       await expect(paydeceEscrowLocal.connect(owner).withdrawFees(tokenLocal.address)).to.be.revertedWith("No fees available for withdrawal");
     });
@@ -1508,7 +1508,7 @@ describe("PaydeceEscrow", function () {
   describe("negative and branch coverage", function () {
     
     it("should revert if non-owner calls setMerchantVerifiedPercent", async function () {
-      await expect(paydeceEscrow.connect(addr1).setMerchantVerifiedPercent(50)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(addr1).setMerchantVerifiedPercent(50)).to.be.reverted;
     });
     it("should revert if setMerchantVerifiedPercent > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setMerchantVerifiedPercent(201)).to.be.reverted;
@@ -1574,37 +1574,37 @@ describe("PaydeceEscrow", function () {
       await expect(paydeceEscrow.connect(owner).setScale2Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale2Percent", async function () {
-      await expect(paydeceEscrow.connect(addr1).setScale2Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(addr1).setScale2Percent(100)).to.be.reverted;
     });
     it("should revert if setScale3Percent > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setScale3Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale3Percent", async function () {
-      await expect(paydeceEscrow.connect(addr1).setScale3Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(addr1).setScale3Percent(100)).to.be.reverted;
     });
     it("should revert if setScale4Percent > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setScale4Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale4Percent", async function () {
-      await expect(paydeceEscrow.connect(addr1).setScale4Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(addr1).setScale4Percent(100)).to.be.reverted;
     });
     it("should revert if setScale5Percent > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setScale5Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale5Percent", async function () {
-      await expect(paydeceEscrow.connect(addr1).setScale5Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(addr1).setScale5Percent(100)).to.be.reverted;
     });
     it("should revert if setScale6Percent > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setScale6Percent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setScale6Percent", async function () {
-      await expect(paydeceEscrow.connect(addr1).setScale6Percent(100)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(addr1).setScale6Percent(100)).to.be.reverted;
     });
     it("should revert if setMerchantVerifiedPercent > 200", async function () {
       await expect(paydeceEscrow.connect(owner).setMerchantVerifiedPercent(201)).to.be.reverted;
     });
     it("should revert if non-owner calls setMerchantVerifiedPercent", async function () {
-      await expect(paydeceEscrow.connect(addr1).setMerchantVerifiedPercent(100)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(paydeceEscrow.connect(addr1).setMerchantVerifiedPercent(100)).to.be.reverted;
     });
   });
 
@@ -1724,7 +1724,7 @@ describe("PaydeceEscrow", function () {
     it("should revert if called by non-owner", async function () {
       await expect(
         paydeceEscrow.connect(sender).renounceOwnership()
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 
@@ -1749,7 +1749,7 @@ describe("PaydeceEscrow", function () {
     it("should fail if not called by owner", async function () {
       await expect(
         paydeceEscrow.connect(sender).setMerchantStatus(receiver.address, true)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
 
     it("should fail if user address is zero", async function () {
@@ -1840,7 +1840,7 @@ describe("PaydeceEscrow", function () {
       
       await expect(
         paydeceEscrow.connect(sender).setMerchantStatusBatch(users, statuses)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 

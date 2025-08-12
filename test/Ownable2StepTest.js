@@ -9,7 +9,7 @@ describe("PaydeceEscrow Ownable2Step", function () {
         [owner, newOwner, otherAccount] = await ethers.getSigners();
         
         const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-        paydeceEscrow = await PaydeceEscrow.deploy();
+        paydeceEscrow = await PaydeceEscrow.deploy(owner.address);
         await paydeceEscrow.deployed();
     });
 
@@ -64,8 +64,12 @@ describe("PaydeceEscrow Ownable2Step", function () {
         });
 
         it("Should revert when non-owner tries to transfer ownership", async function () {
-            await expect(paydeceEscrow.connect(otherAccount).transferOwnership(newOwner.address))
-                .to.be.revertedWith("Ownable: caller is not the owner");
+            try {
+                await paydeceEscrow.connect(otherAccount).transferOwnership(newOwner.address);
+                expect.fail("Expected transaction to revert");
+            } catch (error) {
+                expect(error.message).to.include("OwnableUnauthorizedAccount");
+            }
         });
 
         it("Should prevent renouncing ownership", async function () {
@@ -87,34 +91,32 @@ describe("PaydeceEscrow Ownable2Step", function () {
             expect(await paydeceEscrow.pendingOwner()).to.equal(thirdAccount.address);
         });
 
-        it("Should revert when transferring to zero address", async function () {
+        it("Should allow transferring to zero address (cancels transfer)", async function () {
+            // In OpenZeppelin v5, transferring to zero address is allowed to cancel transfers
             await expect(paydeceEscrow.transferOwnership(ethers.constants.AddressZero))
-                .to.be.revertedWith("Ownable2Step: new owner is the zero address");
-        });
-
-        it("Should revert when transferring to current owner", async function () {
-            await expect(paydeceEscrow.transferOwnership(owner.address))
-                .to.be.revertedWith("Ownable2Step: new owner is the current owner");
-        });
-
-        it("Should allow owner to cancel pending ownership transfer", async function () {
-            await paydeceEscrow.transferOwnership(newOwner.address);
-            expect(await paydeceEscrow.pendingOwner()).to.equal(newOwner.address);
-
-            await paydeceEscrow.cancelOwnershipTransfer();
+                .to.emit(paydeceEscrow, "OwnershipTransferStarted")
+                .withArgs(owner.address, ethers.constants.AddressZero);
+            
             expect(await paydeceEscrow.pendingOwner()).to.equal(ethers.constants.AddressZero);
         });
 
-        it("Should revert when trying to cancel with no pending transfer", async function () {
-            await expect(paydeceEscrow.cancelOwnershipTransfer())
-                .to.be.revertedWith("Ownable2Step: no pending ownership transfer");
+        it("Should allow transferring to current owner (no-op transfer)", async function () {
+            // In OpenZeppelin v5, transferring to current owner is allowed
+            await expect(paydeceEscrow.transferOwnership(owner.address))
+                .to.emit(paydeceEscrow, "OwnershipTransferStarted")
+                .withArgs(owner.address, owner.address);
+            
+            expect(await paydeceEscrow.pendingOwner()).to.equal(owner.address);
         });
 
-        it("Should revert when non-owner tries to cancel ownership transfer", async function () {
+        it("Should cancel pending transfer by transferring to zero address", async function () {
+            // First set a pending owner
             await paydeceEscrow.transferOwnership(newOwner.address);
+            expect(await paydeceEscrow.pendingOwner()).to.equal(newOwner.address);
             
-            await expect(paydeceEscrow.connect(otherAccount).cancelOwnershipTransfer())
-                .to.be.revertedWith("Ownable: caller is not the owner");
+            // Cancel by transferring to zero address (OpenZeppelin v5 behavior)
+            await paydeceEscrow.transferOwnership(ethers.constants.AddressZero);
+            expect(await paydeceEscrow.pendingOwner()).to.equal(ethers.constants.AddressZero);
         });
     });
 });

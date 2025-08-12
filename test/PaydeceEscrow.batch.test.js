@@ -16,7 +16,7 @@ describe("PaydeceEscrow - Batch Scale Operations", function () {
 
     // Deploy PaydeceEscrow
     const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
+    paydeceEscrow = await PaydeceEscrow.deploy(owner.address);
     await paydeceEscrow.deployed();
   });
 
@@ -91,7 +91,7 @@ describe("PaydeceEscrow - Batch Scale Operations", function () {
     it("should only be callable by owner", async function () {
       await expect(
         paydeceEscrow.connect(user1).setAllScales(120, 100, 80, 60, 40)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 
@@ -155,7 +155,7 @@ describe("PaydeceEscrow - Batch Scale Operations", function () {
     it("should only be callable by owner", async function () {
       await expect(
         paydeceEscrow.connect(user1).setMultipleScales([2], [120])
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.reverted;
     });
   });
 

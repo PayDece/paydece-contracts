@@ -4,8 +4,8 @@ pragma solidity 0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./Ownable2Step.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 contract PaydeceEscrow is ReentrancyGuard, Ownable2Step {
     /// @notice Time limit in seconds for users to complete the transaction
@@ -191,7 +191,7 @@ contract PaydeceEscrow is ReentrancyGuard, Ownable2Step {
 
     /// @notice Contract constructor - initializes default fee structure and time limits
     /// @dev Sets up the six-tier fee structure and merchant verification rates
-    constructor() {
+    constructor(address initialOwner) Ownable(initialOwner) {
         timeProcess = 45 * 60; // 45 minutes
         // Initialize fee scale values
         scale1FixedFee = 5; // 0.5 token (without decimals)

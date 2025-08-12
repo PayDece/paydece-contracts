@@ -14,7 +14,7 @@ describe("PaydeceEscrow Extra Flow", function () {
     await usdt.connect(owner).transfer(sender.address, ethers.utils.parseUnits("1000", 18));
     // Deploy PaydeceEscrow
     const PaydeceEscrow = await ethers.getContractFactory("PaydeceEscrow");
-    paydeceEscrow = await PaydeceEscrow.deploy();
+    paydeceEscrow = await PaydeceEscrow.deploy(owner.address);
     await paydeceEscrow.deployed();
     // Whitelist USDT
     await paydeceEscrow.connect(owner).addStableAddress(usdt.address);
